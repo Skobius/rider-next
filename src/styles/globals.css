@@ -6,8 +6,10 @@
   --ink: #111312;
   --muted: #6d716d;
   --line: #e4e0d6;
-  --yellow: #ffd23f;
-  --orange: #ef6a32;
+  --yellow: #f4cf58;
+  --orange: #ff6418;
+  --orange-soft: #fff0e8;
+  --orange-line: #ffd4c0;
   --green: #259b66;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -21,7 +23,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 50% 0%, rgba(255, 210, 63, 0.16), transparent 34%),
+    radial-gradient(circle at 50% 0%, rgba(255, 100, 24, 0.12), transparent 34%),
     linear-gradient(135deg, #171a18, var(--page));
   color: var(--ink);
 }
@@ -74,7 +76,7 @@ button {
   padding: 24px;
   background:
     linear-gradient(180deg, rgba(17, 19, 18, 0.08), rgba(17, 19, 18, 0.84)),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 900'%3E%3Crect width='700' height='900' fill='%23111312'/%3E%3Cpath d='M74 610 C190 498 372 488 530 580' fill='none' stroke='%23ffd23f' stroke-width='36' stroke-linecap='round'/%3E%3Ccircle cx='206' cy='652' r='68' fill='none' stroke='%23f7f5ef' stroke-width='24'/%3E%3Ccircle cx='526' cy='652' r='68' fill='none' stroke='%23f7f5ef' stroke-width='24'/%3E%3Cpath d='M322 430 l73 -70 l27 124 l88 -9' fill='none' stroke='%23f7f5ef' stroke-width='26' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M0 760 L700 620 L700 900 L0 900 Z' fill='%23ef6a32'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 700 900'%3E%3Crect width='700' height='900' fill='%23111312'/%3E%3Cpath d='M74 610 C190 498 372 488 530 580' fill='none' stroke='%23ff6418' stroke-width='36' stroke-linecap='round'/%3E%3Ccircle cx='206' cy='652' r='68' fill='none' stroke='%23f7f5ef' stroke-width='24'/%3E%3Ccircle cx='526' cy='652' r='68' fill='none' stroke='%23f7f5ef' stroke-width='24'/%3E%3Cpath d='M322 430 l73 -70 l27 124 l88 -9' fill='none' stroke='%23f7f5ef' stroke-width='26' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M0 760 L700 620 L700 900 L0 900 Z' fill='%23ff6418'/%3E%3C/svg%3E");
   background-size: cover;
   background-position: center;
   color: #fff;
@@ -94,8 +96,8 @@ button {
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: var(--yellow);
-  color: var(--ink);
+  background: var(--orange);
+  color: #fff;
   font-weight: 950;
 }
 
@@ -127,7 +129,7 @@ button {
 
 .eyebrow {
   margin: 0;
-  color: var(--yellow);
+  color: var(--orange);
   font-size: 12px;
   font-weight: 950;
   letter-spacing: 0;
@@ -178,8 +180,9 @@ button {
 }
 
 .primary-action {
-  background: var(--yellow);
-  color: var(--ink);
+  background: var(--orange);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(255, 100, 24, 0.22);
 }
 
 .secondary-action {
@@ -251,6 +254,10 @@ button {
   color: #fff;
 }
 
+.bottom-nav__item.active svg {
+  color: var(--orange);
+}
+
 .home-hub,
 .first-step-page,
 .path-page {
@@ -318,7 +325,14 @@ button {
   color: var(--ink);
   padding: 14px;
   text-align: left;
-  box-shadow: 0 12px 28px rgba(17, 19, 18, 0.05);
+  box-shadow: 0 10px 24px rgba(17, 19, 18, 0.045);
+  transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.section-card:hover {
+  border-color: var(--orange-line);
+  box-shadow: 0 14px 30px rgba(17, 19, 18, 0.07);
+  transform: translateY(-1px);
 }
 
 .section-card__icon {
@@ -327,8 +341,8 @@ button {
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: var(--ink);
-  color: var(--yellow);
+  background: var(--orange-soft);
+  color: var(--orange);
 }
 
 .section-card__copy {
@@ -351,9 +365,9 @@ button {
 .start-helper {
   display: grid;
   gap: 14px;
-  border: 1px solid rgba(255, 210, 63, 0.56);
+  border: 1px solid var(--orange-line);
   border-radius: 20px;
-  background: #fff8d8;
+  background: linear-gradient(180deg, #fffaf7, var(--orange-soft));
   padding: 18px;
 }
 
@@ -393,8 +407,8 @@ button {
   width: fit-content;
   border-radius: 999px;
   padding: 8px 12px;
-  background: var(--yellow);
-  color: var(--ink);
+  background: var(--orange);
+  color: #fff;
   font-size: 12px;
   font-weight: 950;
   text-transform: uppercase;
@@ -411,11 +425,11 @@ button {
   display: grid;
   gap: 6px;
   padding-left: 14px;
-  border-left: 4px solid var(--yellow);
+  border-left: 4px solid var(--orange);
 }
 
 .mentor-note span {
-  color: var(--yellow);
+  color: var(--orange);
   font-size: 12px;
   font-weight: 950;
   text-transform: uppercase;
@@ -470,8 +484,8 @@ button {
   display: grid;
   place-items: center;
   border-radius: 10px;
-  background: var(--yellow);
-  color: var(--ink);
+  background: var(--orange-soft);
+  color: var(--orange);
   font-weight: 950;
 }
 
