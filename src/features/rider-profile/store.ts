@@ -74,6 +74,19 @@ export const useRiderStore = create<RiderState>()(
         })),
       resetProfile: () => set({ profile: initialProfile }),
     }),
-    { name: 'rider-next-profile' },
+    {
+      name: 'rider-next-profile',
+      merge: (persisted, current) => {
+        const saved = persisted as Partial<RiderState>;
+        return {
+          ...current,
+          ...saved,
+          profile: {
+            ...current.profile,
+            ...saved.profile,
+          },
+        };
+      },
+    },
   ),
 );
