@@ -20,6 +20,20 @@ export type RiderStage = {
   linkedSkillIds: string[];
 };
 
+export type Mission = {
+  id: string;
+  stageId: string;
+  title: string;
+  subtitle: string;
+  mentorNote: string;
+  xp: number;
+  tasks: string[];
+  unlocks: string;
+  articleIds: string[];
+  skillIds: string[];
+  garageTasks: string[];
+};
+
 export type KnowledgeArticle = {
   id: string;
   title: string;

@@ -7,9 +7,9 @@ export function WelcomePage() {
       <section className="welcome__hero">
         <p className="eyebrow">Powered by MG67</p>
         <h1>Rider Next</h1>
-        <p>Карманный проводник, который помогает понять следующий шаг в мотоциклетной жизни.</p>
+        <p>Мото-наставник с короткими миссиями: меньше хаоса, больше понятных шагов.</p>
         <Link className="primary-action" to="/onboarding">
-          Начать
+          Выбрать старт
           <ArrowRight size={20} aria-hidden="true" />
         </Link>
       </section>

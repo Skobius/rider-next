@@ -16,8 +16,8 @@ export function OnboardingPage() {
     <main className="onboarding">
       <header className="page-header">
         <p className="eyebrow">Первый шаг</p>
-        <h1>Кто ты сейчас?</h1>
-        <p>Выбери ближайшее состояние. Потом его можно будет изменить.</p>
+        <h1>Где ты сейчас?</h1>
+        <p>Выбери ближайшую ситуацию. Rider Next даст одну первую миссию, а не список всего подряд.</p>
       </header>
       <div className="choice-list">
         {(Object.entries(statusLabels) as [RiderStatus, string][]).map(([status, label]) => (

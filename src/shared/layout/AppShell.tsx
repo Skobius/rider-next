@@ -2,10 +2,10 @@ import { BookOpen, Dumbbell, Home, Map, Settings } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const navItems = [
-  { to: '/home', label: 'Главная', icon: Home },
-  { to: '/journey', label: 'Путь', icon: Map },
-  { to: '/knowledge', label: 'Знания', icon: BookOpen },
-  { to: '/motorcycle', label: 'Мото', icon: Settings },
+  { to: '/home', label: 'Сегодня', icon: Home },
+  { to: '/journey', label: 'Карта', icon: Map },
+  { to: '/knowledge', label: 'Советы', icon: BookOpen },
+  { to: '/motorcycle', label: 'Гараж', icon: Settings },
   { to: '/training', label: 'Навыки', icon: Dumbbell },
 ];
 

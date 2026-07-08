@@ -1,5 +1,6 @@
 import { FormEvent } from 'react';
 import { maintenanceTasks } from '../../data/maintenanceTasks';
+import { getMissionForStatus } from '../../data/missions';
 import { useRiderStore } from '../../features/rider-profile/store';
 import { PageHeader } from '../../shared/ui/PageHeader';
 
@@ -7,6 +8,8 @@ export function MotorcyclePage() {
   const profile = useRiderStore((state) => state.profile);
   const saveMotorcycle = useRiderStore((state) => state.saveMotorcycle);
   const addMaintenance = useRiderStore((state) => state.addMaintenance);
+  const mission = getMissionForStatus(profile.status);
+  const activeTasks = maintenanceTasks.filter((task) => mission.garageTasks.includes(task.title));
 
   function handleMotorcycleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,10 +39,27 @@ export function MotorcyclePage() {
   return (
     <section className="page">
       <PageHeader
-        eyebrow="Сервис без сложности"
-        title="Мой мотоцикл"
-        description="Пока без огромной базы моделей: фиксируем главное и напоминаем о базовых задачах."
+        eyebrow="Гараж"
+        title="Состояние байка"
+        description="Минимум бюрократии: мотоцикл, пробег и то, что важно проверить перед следующей миссией."
       />
+
+      {activeTasks.length > 0 ? (
+        <section className="mission-panel garage-focus">
+          <div className="section-title">
+            <h2>Нужно для миссии</h2>
+            <span>{mission.title}</span>
+          </div>
+          <div className="task-list">
+            {activeTasks.map((task) => (
+              <article key={task.title}>
+                <strong>{task.title}</strong>
+                <span>{task.interval}</span>
+              </article>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <form className="form-panel" onSubmit={handleMotorcycleSubmit}>
         <label>
@@ -68,11 +88,11 @@ export function MotorcyclePage() {
           Заметки
           <textarea name="notes" defaultValue={profile.motorcycle?.notes} placeholder="Что важно помнить" />
         </label>
-        <button className="primary-action" type="submit">Сохранить мотоцикл</button>
+        <button className="primary-action" type="submit">Сохранить байк</button>
       </form>
 
       <section className="section-block">
-        <h2>Базовые напоминания</h2>
+        <h2>Базовые проверки</h2>
         <div className="task-list">
           {maintenanceTasks.map((task) => (
             <article key={task.title}>

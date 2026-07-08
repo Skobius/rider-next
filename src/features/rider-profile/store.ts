@@ -5,6 +5,7 @@ import type { MaintenanceRecord, MotorcycleProfile, RiderStatus } from '../../sh
 type RiderProfile = {
   status: RiderStatus | null;
   completedChecklist: string[];
+  completedMissions: string[];
   completedSkills: string[];
   repeatSkills: string[];
   motorcycle: MotorcycleProfile | null;
@@ -15,6 +16,7 @@ type RiderState = {
   profile: RiderProfile;
   setStatus: (status: RiderStatus) => void;
   toggleChecklist: (item: string) => void;
+  completeMission: (missionId: string) => void;
   toggleSkillDone: (skillId: string) => void;
   toggleSkillRepeat: (skillId: string) => void;
   saveMotorcycle: (motorcycle: MotorcycleProfile) => void;
@@ -25,6 +27,7 @@ type RiderState = {
 const initialProfile: RiderProfile = {
   status: null,
   completedChecklist: [],
+  completedMissions: [],
   completedSkills: [],
   repeatSkills: [],
   motorcycle: null,
@@ -43,6 +46,15 @@ export const useRiderStore = create<RiderState>()(
       toggleChecklist: (item) =>
         set((state) => ({
           profile: { ...state.profile, completedChecklist: toggleInList(state.profile.completedChecklist, item) },
+        })),
+      completeMission: (missionId) =>
+        set((state) => ({
+          profile: {
+            ...state.profile,
+            completedMissions: state.profile.completedMissions.includes(missionId)
+              ? state.profile.completedMissions
+              : [...state.profile.completedMissions, missionId],
+          },
         })),
       toggleSkillDone: (skillId) =>
         set((state) => ({
