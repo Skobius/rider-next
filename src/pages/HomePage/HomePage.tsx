@@ -1,89 +1,56 @@
-import { ArrowRight, CheckCircle2, Gauge, RotateCcw, Trophy } from 'lucide-react';
+import { Bike, Map } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getMissionForStatus, missions } from '../../data/missions';
-import { statusLabels } from '../../data/riderStages';
+import { nextSteps, statusLabels } from '../../data/firstExperience';
 import { useRiderStore } from '../../features/rider-profile/store';
 
 export function HomePage() {
   const profile = useRiderStore((state) => state.profile);
-  const completeMission = useRiderStore((state) => state.completeMission);
   const resetProfile = useRiderStore((state) => state.resetProfile);
-  const mission = getMissionForStatus(profile.status);
-  const isCompleted = profile.completedMissions.includes(mission.id);
-  const totalXp = missions
-    .filter((item) => profile.completedMissions.includes(item.id))
-    .reduce((sum, item) => sum + item.xp, 0);
+  const status = profile.status ?? 'licensed';
+  const nextStep = nextSteps[status];
 
   return (
-    <section className="page today-page">
-      <header className="today-top">
-        <div>
-          <p className="eyebrow">Сегодня</p>
-          <h1>Твой следующий шаг</h1>
-        </div>
-        <div className="xp-pill">
-          <Trophy size={18} />
-          <span>{totalXp} XP</span>
-        </div>
+    <section className="page first-step-page">
+      <header className="simple-header">
+        <p className="eyebrow">Твой следующий шаг</p>
+        <h1>{nextStep.headline}</h1>
+        <p>{statusLabels[status]}</p>
       </header>
 
-      <article className="mission-hero">
-        <div className="mission-hero__status">
-          <span>{profile.status ? statusLabels[profile.status] : 'Rider Next'}</span>
-          <strong>{isCompleted ? 'Миссия закрыта' : `+${mission.xp} XP`}</strong>
-        </div>
-        <h2>{mission.title}</h2>
-        <p>{mission.subtitle}</p>
+      <article className="next-step-card">
+        <div className="next-step-card__label">Что дальше?</div>
+        <h2>{nextStep.step}</h2>
         <div className="mentor-note">
-          <span>MG67</span>
-          <p>{mission.mentorNote}</p>
+          <span>MG67 Moto Guide</span>
+          <p>{nextStep.note}</p>
         </div>
       </article>
 
-      <section className="mission-panel">
-        <div className="section-title">
-          <h2>Сделай это</h2>
-          <span>{mission.tasks.length} шага</span>
-        </div>
-        <div className="mission-task-list">
-          {mission.tasks.map((task, index) => (
-            <div className="mission-task" key={task}>
+      <section className="action-card">
+        <h2>Что важно сейчас</h2>
+        <div className="clean-list">
+          {nextStep.important.map((item, index) => (
+            <div key={item} className="clean-list__item">
               <span>{index + 1}</span>
-              <p>{task}</p>
+              <p>{item}</p>
             </div>
           ))}
         </div>
-        <button
-          className={isCompleted ? 'primary-action primary-action--done' : 'primary-action'}
-          type="button"
-          onClick={() => completeMission(mission.id)}
-        >
-          <CheckCircle2 size={20} />
-          {isCompleted ? 'Миссия выполнена' : 'Завершить миссию'}
-        </button>
       </section>
 
-      <section className="next-unlock">
-        <Gauge size={22} />
-        <div>
-          <strong>После выполнения</strong>
-          <p>{mission.unlocks}</p>
-        </div>
-      </section>
-
-      <div className="home-actions">
-        <Link to="/journey" className="compact-action">
-          <ArrowRight size={20} />
-          Карта пути
+      <div className="primary-grid">
+        <Link className="primary-action" to="/journey">
+          <Map size={20} />
+          Посмотреть план
         </Link>
-        <Link to="/training" className="compact-action">
-          <RotateCcw size={20} />
-          Навыки
+        <Link className="secondary-action" to="/motorcycle">
+          <Bike size={20} />
+          Добавить мотоцикл
         </Link>
       </div>
 
       <button className="ghost-button" type="button" onClick={resetProfile}>
-        Сменить стартовую точку
+        Выбрать другое состояние
       </button>
     </section>
   );

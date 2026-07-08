@@ -1,43 +1,26 @@
-import { CheckCircle2, Lock, MapPin } from 'lucide-react';
-import { getMissionByStage } from '../../data/missions';
-import { riderStages } from '../../data/riderStages';
-import { getCurrentStage } from '../../features/journey/selectors';
-import { useRiderStore } from '../../features/rider-profile/store';
-import { PageHeader } from '../../shared/ui/PageHeader';
+import { CheckCircle2 } from 'lucide-react';
+import { beginnerPath } from '../../data/firstExperience';
 
 export function JourneyPage() {
-  const profile = useRiderStore((state) => state.profile);
-  const currentStage = getCurrentStage(profile.status);
-
   return (
-    <section className="page">
-      <PageHeader
-        eyebrow="Карта миссий"
-        title="Путь райдера"
-        description="Здесь не нужно читать всё сразу. Двигайся от ближайшей миссии к следующей."
-      />
+    <section className="page path-page">
+      <header className="simple-header">
+        <p className="eyebrow">Путь новичка</p>
+        <h1>Не всё сразу. Вот нормальная последовательность.</h1>
+        <p>Это короткая карта, чтобы не тонуть в советах, видео и случайных мнениях.</p>
+      </header>
 
-      <div className="mission-map">
-        {riderStages.map((stage) => {
-          const mission = getMissionByStage(stage.id);
-          const isCurrent = stage.id === currentStage.id;
-          const isPast = stage.order < currentStage.order;
-          const isDone = mission ? profile.completedMissions.includes(mission.id) : isPast;
-
-          return (
-            <article className={`map-node ${isCurrent ? 'map-node--current' : ''}`} key={stage.id}>
-              <div className="map-node__marker">
-                {isDone ? <CheckCircle2 size={22} /> : isCurrent ? <MapPin size={22} /> : <Lock size={20} />}
-              </div>
-              <div className="map-node__content">
-                <span>Уровень {stage.order}</span>
-                <h2>{stage.title}</h2>
-                <p>{mission?.title ?? stage.goal}</p>
-                {mission ? <strong>Награда: +{mission.xp} XP</strong> : null}
-              </div>
-            </article>
-          );
-        })}
+      <div className="path-list">
+        {beginnerPath.map((item, index) => (
+          <article className="path-item" key={item}>
+            <div className="path-item__number">{index + 1}</div>
+            <div>
+              <h2>{item}</h2>
+              <p>{index === 0 ? 'Начни с ближайшего шага. Остальное можно открывать постепенно.' : 'Этот шаг появится, когда будет нужен.'}</p>
+            </div>
+            {index === 0 ? <CheckCircle2 size={22} aria-hidden="true" /> : null}
+          </article>
+        ))}
       </div>
     </section>
   );

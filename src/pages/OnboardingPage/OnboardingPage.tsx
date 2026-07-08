@@ -1,5 +1,6 @@
+import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { statusLabels } from '../../data/riderStages';
+import { onboardingStatuses, statusLabels } from '../../data/firstExperience';
 import { useRiderStore } from '../../features/rider-profile/store';
 import type { RiderStatus } from '../../shared/types/domain';
 
@@ -13,16 +14,17 @@ export function OnboardingPage() {
   }
 
   return (
-    <main className="onboarding">
-      <header className="page-header">
-        <p className="eyebrow">Первый шаг</p>
-        <h1>Где ты сейчас?</h1>
-        <p>Выбери ближайшую ситуацию. Rider Next даст одну первую миссию, а не список всего подряд.</p>
+    <main className="onboarding screen-card">
+      <header className="simple-header">
+        <p className="eyebrow">Первый вопрос</p>
+        <h1>Где ты сейчас на пути?</h1>
+        <p>Выбери один вариант. Rider Next покажет ближайший следующий шаг.</p>
       </header>
       <div className="choice-list">
-        {(Object.entries(statusLabels) as [RiderStatus, string][]).map(([status, label]) => (
+        {onboardingStatuses.map((status) => (
           <button className="choice-button" key={status} type="button" onClick={() => chooseStatus(status)}>
-            {label}
+            <span>{statusLabels[status]}</span>
+            <ArrowRight size={18} aria-hidden="true" />
           </button>
         ))}
       </div>
