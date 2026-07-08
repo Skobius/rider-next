@@ -3,6 +3,7 @@ dist
 .vite
 .npm-cache
 .gitrepo
+.ssh-known-hosts
 *.local
 *.tsbuildinfo
 .DS_Store
