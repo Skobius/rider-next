@@ -251,11 +251,123 @@ button {
   color: #fff;
 }
 
+.home-hub,
 .first-step-page,
 .path-page {
   display: grid;
   gap: 14px;
   align-content: start;
+}
+
+.home-intro {
+  display: grid;
+  gap: 12px;
+  padding: 10px 2px 4px;
+}
+
+.home-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.home-brand span {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.home-brand strong {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.home-intro h1 {
+  max-width: 440px;
+  margin: 0;
+  font-size: clamp(30px, 7vw, 42px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.home-intro p {
+  max-width: 480px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.section-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.section-card {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 48px 1fr;
+  gap: 12px;
+  align-items: center;
+  min-height: 92px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--card);
+  color: var(--ink);
+  padding: 14px;
+  text-align: left;
+  box-shadow: 0 12px 28px rgba(17, 19, 18, 0.05);
+}
+
+.section-card__icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--yellow);
+}
+
+.section-card__copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.section-card__copy strong {
+  font-size: 17px;
+  line-height: 1.15;
+}
+
+.section-card__copy small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.start-helper {
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(255, 210, 63, 0.56);
+  border-radius: 20px;
+  background: #fff8d8;
+  padding: 18px;
+}
+
+.start-helper h2 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  line-height: 1.1;
+  letter-spacing: 0;
+}
+
+.start-helper p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.4;
 }
 
 .next-step-card,
@@ -459,5 +571,13 @@ textarea {
   .primary-grid,
   .form-row {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .section-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .section-card:last-child {
+    grid-column: 1 / -1;
   }
 }
