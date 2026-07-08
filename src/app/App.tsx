@@ -2,10 +2,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from '../shared/layout/AppShell';
 import { HomePage } from '../pages/HomePage/HomePage';
 import { JourneyPage } from '../pages/JourneyPage/JourneyPage';
-import { KnowledgePage } from '../pages/KnowledgePage/KnowledgePage';
 import { MotorcyclePage } from '../pages/MotorcyclePage/MotorcyclePage';
 import { OnboardingPage } from '../pages/OnboardingPage/OnboardingPage';
-import { TrainingPage } from '../pages/TrainingPage/TrainingPage';
 import { WelcomePage } from '../pages/WelcomePage/WelcomePage';
 import { useRiderStore } from '../features/rider-profile/store';
 
@@ -19,9 +17,9 @@ export function App() {
       <Route element={<AppShell />}>
         <Route path="/home" element={<HomePage />} />
         <Route path="/journey" element={<JourneyPage />} />
-        <Route path="/knowledge" element={<KnowledgePage />} />
+        <Route path="/journey/:stageId" element={<JourneyPage />} />
         <Route path="/motorcycle" element={<MotorcyclePage />} />
-        <Route path="/training" element={<TrainingPage />} />
+        <Route path="/motorcycle/:topicId" element={<MotorcyclePage />} />
       </Route>
     </Routes>
   );

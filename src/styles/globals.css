@@ -259,6 +259,8 @@ button {
 }
 
 .home-hub,
+.motorcycle-page,
+.detail-page,
 .first-step-page,
 .path-page {
   display: grid;
@@ -387,12 +389,177 @@ button {
 .next-step-card,
 .action-card,
 .path-item,
+.journey-card,
+.topic-card,
+.bike-summary,
 .form-panel,
 .section-block {
   border: 1px solid var(--line);
   border-radius: 20px;
   background: var(--card);
   box-shadow: 0 16px 40px rgba(17, 19, 18, 0.06);
+}
+
+.journey-list,
+.topic-grid,
+.subsection-list {
+  display: grid;
+  gap: 10px;
+}
+
+.journey-card {
+  display: grid;
+  grid-template-columns: 34px 46px 1fr 20px;
+  gap: 10px;
+  align-items: center;
+  min-height: 96px;
+  padding: 12px;
+}
+
+.journey-card__index {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--orange-soft);
+  color: var(--orange);
+  font-weight: 950;
+}
+
+.journey-card__icon,
+.topic-card__icon,
+.detail-hero__icon {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--ink);
+  color: var(--orange);
+}
+
+.journey-card__copy {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.journey-card__copy strong,
+.topic-card strong,
+.subsection-card strong {
+  font-size: 16px;
+  line-height: 1.15;
+}
+
+.journey-card__copy small,
+.topic-card small,
+.subsection-card span {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.back-link {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-weight: 850;
+}
+
+.detail-hero {
+  display: grid;
+  gap: 10px;
+  border-radius: 22px;
+  background: var(--ink);
+  color: #fff;
+  padding: 20px;
+}
+
+.detail-hero h1 {
+  margin: 0;
+  font-size: clamp(32px, 7vw, 48px);
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.detail-hero p:not(.eyebrow) {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.76);
+  line-height: 1.45;
+}
+
+.subsection-card {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fbfaf6;
+  padding: 14px;
+}
+
+.bike-summary {
+  display: grid;
+  gap: 16px;
+  padding: 18px;
+  background: var(--ink);
+  color: #fff;
+}
+
+.bike-summary h2 {
+  margin: 6px 0;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: 0;
+}
+
+.bike-summary p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.bike-summary span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.bike-summary__stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.bike-summary__stats article {
+  display: grid;
+  gap: 4px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 12px;
+}
+
+.bike-summary__stats strong {
+  color: #fff;
+}
+
+.topic-card {
+  display: grid;
+  grid-template-columns: 46px 1fr 20px;
+  gap: 12px;
+  align-items: center;
+  min-height: 78px;
+  padding: 12px;
+}
+
+.topic-card span:nth-child(2) {
+  display: grid;
+  gap: 4px;
+}
+
+.compact-form {
+  margin-top: 4px;
 }
 
 .next-step-card {

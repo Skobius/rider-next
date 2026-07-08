@@ -1,15 +1,17 @@
 import { FormEvent } from 'react';
-import { maintenanceTasks } from '../../data/maintenanceTasks';
-import { getMissionForStatus } from '../../data/missions';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { findMotorcycleTopic, motorcycleTopics } from '../../data/appStructure';
 import { useRiderStore } from '../../features/rider-profile/store';
-import { PageHeader } from '../../shared/ui/PageHeader';
 
 export function MotorcyclePage() {
+  const { topicId } = useParams();
+  const topic = findMotorcycleTopic(topicId);
   const profile = useRiderStore((state) => state.profile);
   const saveMotorcycle = useRiderStore((state) => state.saveMotorcycle);
-  const addMaintenance = useRiderStore((state) => state.addMaintenance);
-  const mission = getMissionForStatus(profile.status);
-  const activeTasks = maintenanceTasks.filter((task) => mission.garageTasks.includes(task.title));
+  const bikeName = profile.motorcycle?.brand || profile.motorcycle?.model
+    ? `${profile.motorcycle?.brand ?? ''} ${profile.motorcycle?.model ?? ''}`.trim()
+    : 'Мой мотоцикл';
 
   function handleMotorcycleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,51 +26,92 @@ export function MotorcyclePage() {
     });
   }
 
-  function handleMaintenanceSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    addMaintenance({
-      title: String(data.get('title') ?? ''),
-      mileage: String(data.get('serviceMileage') ?? ''),
-      date: String(data.get('serviceDate') ?? ''),
-    });
-    form.reset();
-  }
+  if (topic) {
+    const Icon = topic.icon;
+    return (
+      <section className="page detail-page">
+        <Link className="back-link" to="/motorcycle">
+          <ArrowLeft size={18} />
+          Мотоцикл
+        </Link>
 
-  return (
-    <section className="page">
-      <PageHeader
-        eyebrow="Гараж"
-        title="Состояние байка"
-        description="Минимум бюрократии: мотоцикл, пробег и то, что важно проверить перед следующей миссией."
-      />
+        <header className="detail-hero">
+          <span className="detail-hero__icon">
+            <Icon size={26} aria-hidden="true" />
+          </span>
+          <p className="eyebrow">Карточка байка</p>
+          <h1>{topic.title}</h1>
+          <p>{topic.description}</p>
+        </header>
 
-      {activeTasks.length > 0 ? (
-        <section className="mission-panel garage-focus">
-          <div className="section-title">
-            <h2>Нужно для миссии</h2>
-            <span>{mission.title}</span>
-          </div>
-          <div className="task-list">
-            {activeTasks.map((task) => (
-              <article key={task.title}>
-                <strong>{task.title}</strong>
-                <span>{task.interval}</span>
+        <section className="section-block">
+          <h2>Что здесь будет</h2>
+          <div className="subsection-list">
+            {['Краткая инструкция', 'Когда проверять', 'Что записывать', 'Типичные ошибки'].map((item) => (
+              <article className="subsection-card" key={item}>
+                <strong>{item}</strong>
+                <span>Пока заглушка. Позже добавим понятный материал MG67.</span>
               </article>
             ))}
           </div>
         </section>
-      ) : null}
+      </section>
+    );
+  }
 
-      <form className="form-panel" onSubmit={handleMotorcycleSubmit}>
+  return (
+    <section className="page motorcycle-page">
+      <header className="simple-header">
+        <p className="eyebrow">Мотоцикл</p>
+        <h1>Помощник владельца байка</h1>
+        <p>Не CRM. Просто главное состояние мотоцикла и базовые вещи, за которыми стоит следить.</p>
+      </header>
+
+      <section className="bike-summary">
+        <div>
+          <span>{profile.motorcycle?.year || 'год не указан'}</span>
+          <h2>{bikeName}</h2>
+          <p>{profile.motorcycle?.mileage ? `${profile.motorcycle.mileage} км` : 'Добавь пробег, чтобы видеть картину понятнее.'}</p>
+        </div>
+        <div className="bike-summary__stats">
+          <article>
+            <strong>{profile.maintenance[0]?.date || 'нет записи'}</strong>
+            <span>Последнее ТО</span>
+          </article>
+          <article>
+            <strong>план</strong>
+            <span>Следующее ТО</span>
+          </article>
+        </div>
+      </section>
+
+      <div className="topic-grid">
+        {motorcycleTopics.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link className="topic-card" key={item.id} to={`/motorcycle/${item.id}`}>
+              <span className="topic-card__icon">
+                <Icon size={21} aria-hidden="true" />
+              </span>
+              <span>
+                <strong>{item.title}</strong>
+                <small>{item.status}</small>
+              </span>
+              <ChevronRight size={18} aria-hidden="true" />
+            </Link>
+          );
+        })}
+      </div>
+
+      <form className="form-panel compact-form" onSubmit={handleMotorcycleSubmit}>
+        <h2>Данные мотоцикла</h2>
         <label>
           Марка
           <input name="brand" defaultValue={profile.motorcycle?.brand} placeholder="Honda" />
         </label>
         <label>
           Модель
-          <input name="model" defaultValue={profile.motorcycle?.model} placeholder="CB500F" />
+          <input name="model" defaultValue={profile.motorcycle?.model} placeholder="CB500X" />
         </label>
         <div className="form-row">
           <label>
@@ -88,55 +131,8 @@ export function MotorcyclePage() {
           Заметки
           <textarea name="notes" defaultValue={profile.motorcycle?.notes} placeholder="Что важно помнить" />
         </label>
-        <button className="primary-action" type="submit">Сохранить байк</button>
+        <button className="primary-action" type="submit">Сохранить</button>
       </form>
-
-      <section className="section-block">
-        <h2>Базовые проверки</h2>
-        <div className="task-list">
-          {maintenanceTasks.map((task) => (
-            <article key={task.title}>
-              <strong>{task.title}</strong>
-              <span>{task.interval}</span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <form className="form-panel" onSubmit={handleMaintenanceSubmit}>
-        <h2>Записать обслуживание</h2>
-        <label>
-          Что сделано
-          <input name="title" placeholder="Смазал цепь" required />
-        </label>
-        <div className="form-row">
-          <label>
-            Пробег
-            <input name="serviceMileage" inputMode="numeric" placeholder="13000" />
-          </label>
-          <label>
-            Дата
-            <input name="serviceDate" type="date" />
-          </label>
-        </div>
-        <button className="secondary-action" type="submit">Добавить запись</button>
-      </form>
-
-      <section className="section-block">
-        <h2>История</h2>
-        {profile.maintenance.length === 0 ? (
-          <p className="muted">Пока записей нет.</p>
-        ) : (
-          <div className="task-list">
-            {profile.maintenance.map((record) => (
-              <article key={record.id}>
-                <strong>{record.title}</strong>
-                <span>{[record.mileage && `${record.mileage} км`, record.date].filter(Boolean).join(' · ')}</span>
-              </article>
-            ))}
-          </div>
-        )}
-      </section>
     </section>
   );
 }

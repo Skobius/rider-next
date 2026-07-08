@@ -1,26 +1,69 @@
-import { CheckCircle2 } from 'lucide-react';
-import { beginnerPath } from '../../data/firstExperience';
+import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { findJourneyStage, journeyStages } from '../../data/appStructure';
 
 export function JourneyPage() {
+  const { stageId } = useParams();
+  const stage = findJourneyStage(stageId);
+
+  if (stage) {
+    const Icon = stage.icon;
+    return (
+      <section className="page detail-page">
+        <Link className="back-link" to="/journey">
+          <ArrowLeft size={18} />
+          Путь новичка
+        </Link>
+
+        <header className="detail-hero">
+          <span className="detail-hero__icon">
+            <Icon size={26} aria-hidden="true" />
+          </span>
+          <p className="eyebrow">Этап пути</p>
+          <h1>{stage.title}</h1>
+          <p>{stage.description}</p>
+        </header>
+
+        <section className="section-block">
+          <h2>Что будет внутри</h2>
+          <div className="subsection-list">
+            {stage.sections.map((section) => (
+              <article key={section} className="subsection-card">
+                <strong>{section}</strong>
+                <span>Здесь появится короткий материал, чек-лист или видео.</span>
+              </article>
+            ))}
+          </div>
+        </section>
+      </section>
+    );
+  }
+
   return (
     <section className="page path-page">
       <header className="simple-header">
         <p className="eyebrow">Путь новичка</p>
-        <h1>Не всё сразу. Вот нормальная последовательность.</h1>
-        <p>Это короткая карта, чтобы не тонуть в советах, видео и случайных мнениях.</p>
+        <h1>Карта первых сезонов</h1>
+        <p>От категории А до первых поездок и зимнего хранения. Открывай этапы постепенно.</p>
       </header>
 
-      <div className="path-list">
-        {beginnerPath.map((item, index) => (
-          <article className="path-item" key={item}>
-            <div className="path-item__number">{index + 1}</div>
-            <div>
-              <h2>{item}</h2>
-              <p>{index === 0 ? 'Начни с ближайшего шага. Остальное можно открывать постепенно.' : 'Этот шаг появится, когда будет нужен.'}</p>
-            </div>
-            {index === 0 ? <CheckCircle2 size={22} aria-hidden="true" /> : null}
-          </article>
-        ))}
+      <div className="journey-list">
+        {journeyStages.map((item, index) => {
+          const Icon = item.icon;
+          return (
+            <Link className="journey-card" key={item.id} to={`/journey/${item.id}`}>
+              <span className="journey-card__index">{index + 1}</span>
+              <span className="journey-card__icon">
+                <Icon size={22} aria-hidden="true" />
+              </span>
+              <span className="journey-card__copy">
+                <strong>{item.title}</strong>
+                <small>{item.description}</small>
+              </span>
+              <ChevronRight size={19} aria-hidden="true" />
+            </Link>
+          );
+        })}
       </div>
     </section>
   );
