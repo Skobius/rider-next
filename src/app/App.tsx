@@ -16,6 +16,7 @@ export function App() {
       <Route path="/onboarding" element={<OnboardingPage />} />
       <Route element={<AppShell />}>
         <Route path="/home" element={<HomePage />} />
+        <Route path="/home/:sectionId" element={<HomePage />} />
         <Route path="/journey" element={<JourneyPage />} />
         <Route path="/journey/:stageId" element={<JourneyPage />} />
         <Route path="/motorcycle" element={<MotorcyclePage />} />

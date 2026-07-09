@@ -1,54 +1,44 @@
-import {
-  Bike,
-  CircleHelp,
-  GraduationCap,
-  MapPin,
-  Route,
-  ShieldCheck,
-  Shirt,
-  Wrench,
-} from 'lucide-react';
-import { Link } from 'react-router-dom';
-
-const homeSections = [
-  {
-    title: 'Категория А',
-    text: 'Где учиться, как проходит обучение, что делать после экзамена.',
-    icon: GraduationCap,
-  },
-  {
-    title: 'Первый мотоцикл',
-    text: 'Как выбрать, на что смотреть, какие ошибки не совершить.',
-    icon: Bike,
-  },
-  {
-    title: 'Экипировка',
-    text: 'Что купить в первую очередь и где искать.',
-    icon: Shirt,
-  },
-  {
-    title: 'Обслуживание',
-    text: 'Масло, цепь, резина, ТО, зимнее хранение.',
-    icon: Wrench,
-  },
-  {
-    title: 'Навыки и тренировки',
-    text: 'Как ездить увереннее, что тренировать, зачем контраварийка.',
-    icon: ShieldCheck,
-  },
-  {
-    title: 'Куда поехать',
-    text: 'Маршруты, события, мототуры, места в Смоленске.',
-    icon: MapPin,
-  },
-  {
-    title: 'Вопросы новичка',
-    text: 'Быстрые ответы на частые вопросы после категории А.',
-    icon: CircleHelp,
-  },
-];
+import { ArrowLeft, ChevronRight, Route } from 'lucide-react';
+import { Link, useParams } from 'react-router-dom';
+import { findHomeInfoSection, homeInfoSections } from '../../data/appStructure';
 
 export function HomePage() {
+  const { sectionId } = useParams();
+  const section = findHomeInfoSection(sectionId);
+
+  if (section) {
+    const Icon = section.icon;
+    return (
+      <section className="page detail-page">
+        <Link className="back-link" to="/home">
+          <ArrowLeft size={18} />
+          Главная
+        </Link>
+
+        <header className="detail-hero">
+          <span className="detail-hero__icon">
+            <Icon size={26} aria-hidden="true" />
+          </span>
+          <p className="eyebrow">Раздел</p>
+          <h1>{section.title}</h1>
+          <p>{section.intro}</p>
+        </header>
+
+        <section className="section-block">
+          <h2>Что будет внутри</h2>
+          <div className="subsection-list">
+            {section.topics.map((topic) => (
+              <article className="subsection-card" key={topic}>
+                <strong>{topic}</strong>
+                <span>Пока короткая заглушка. Позже добавим текст, чек-листы, видео и материалы MG67.</span>
+              </article>
+            ))}
+          </div>
+        </section>
+      </section>
+    );
+  }
+
   return (
     <section className="page home-hub">
       <header className="home-intro">
@@ -56,26 +46,27 @@ export function HomePage() {
           <span>Rider Next</span>
           <strong>от MG67 Moto Guide</strong>
         </div>
-        <h1>Первый помощник после категории А</h1>
+        <h1>Наставник мотоциклиста</h1>
         <p>
-          Права, первый мотоцикл, экипировка, обслуживание, навыки и поездки - всё,
-          что нужно новичку в первые сезоны.
+          Права, первый мотоцикл, экипировка, обслуживание, навыки и поездки -
+          всё, что нужно новичку в первый сезон.
         </p>
       </header>
 
       <div className="section-grid">
-        {homeSections.map((section) => {
+        {homeInfoSections.map((section) => {
           const Icon = section.icon;
           return (
-            <button className="section-card" key={section.title} type="button">
+            <Link className="section-card" key={section.id} to={`/home/${section.id}`}>
               <span className="section-card__icon">
                 <Icon size={22} aria-hidden="true" />
               </span>
               <span className="section-card__copy">
                 <strong>{section.title}</strong>
-                <small>{section.text}</small>
+                <small>{section.description}</small>
               </span>
-            </button>
+              <ChevronRight className="section-card__arrow" size={18} aria-hidden="true" />
+            </Link>
           );
         })}
       </div>

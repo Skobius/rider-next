@@ -317,7 +317,7 @@ button {
 .section-card {
   width: 100%;
   display: grid;
-  grid-template-columns: 48px 1fr;
+  grid-template-columns: 48px 1fr 18px;
   gap: 12px;
   align-items: center;
   min-height: 92px;
@@ -329,6 +329,10 @@ button {
   text-align: left;
   box-shadow: 0 10px 24px rgba(17, 19, 18, 0.045);
   transition: border-color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.section-card__arrow {
+  color: var(--muted);
 }
 
 .section-card:hover {

@@ -2,7 +2,7 @@ import { Home, Map, Settings } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const navItems = [
-  { to: '/home', label: 'Сегодня', icon: Home },
+  { to: '/home', label: 'Главная', icon: Home },
   { to: '/journey', label: 'Путь', icon: Map },
   { to: '/motorcycle', label: 'Мотоцикл', icon: Settings },
 ];

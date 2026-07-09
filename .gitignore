@@ -4,6 +4,7 @@ dist
 .npm-cache
 .gitrepo
 .ssh-known-hosts
+.bot-source-*
 *.local
 *.tsbuildinfo
 .DS_Store
