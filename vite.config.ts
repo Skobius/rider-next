@@ -12,20 +12,30 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg'],
+      includeAssets: [
+        'assets/brand/app-icon-64.png',
+        'assets/brand/app-icon-192.png',
+        'assets/brand/app-icon-512.png'
+      ],
       manifest: {
-        name: 'Rider Next',
-        short_name: 'Rider Next',
-        description: 'Карманный проводник по следующему шагу райдера.',
-        theme_color: '#111111',
-        background_color: '#f4f1ea',
+        name: 'МотоХаб',
+        short_name: 'МотоХаб',
+        description: 'Локальный помощник мотоциклиста в Смоленске и области.',
+        theme_color: '#071012',
+        background_color: '#071012',
         display: 'standalone',
         start_url: '/',
         icons: [
           {
-            src: '/icon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
+            src: '/assets/brand/app-icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/assets/brand/app-icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
             purpose: 'any maskable'
           }
         ]

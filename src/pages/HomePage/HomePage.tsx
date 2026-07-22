@@ -1,86 +1,195 @@
-import { ArrowLeft, ChevronRight, Route } from 'lucide-react';
-import { Link, useParams } from 'react-router-dom';
-import { findHomeInfoSection, homeInfoSections } from '../../data/appStructure';
+import { Bell, ChevronRight, Flame, MapPin, Mic, Search, UserRound } from 'lucide-react';
+import { FormEvent, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { getRegionLabel } from '../../data/regions';
+import { popularQueries, recommendations, verifiedPlaces } from '../../data/motohubHome';
+import { getSearchItemPath } from '../../features/search/searchLinks';
+import { searchMotohub } from '../../features/search/searchEngine';
+import { getLocalizedText } from '../../shared/i18n/localizedText';
+import { useI18n } from '../../shared/i18n/useI18n';
+import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
+import { useGuestSettings } from '../../shared/storage/guestSettings';
+import { showToast } from '../../shared/ui/toastStore';
 
 export function HomePage() {
-  const { sectionId } = useParams();
-  const section = findHomeInfoSection(sectionId);
+  const settings = useGuestSettings();
+  const favorites = useFavorites();
+  const { language, t } = useI18n();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState('');
+  const savedRegion = getRegionLabel(settings.regionId);
+  const suggestions = useMemo(() => {
+    if (query.trim().length < 2) return [];
+    return searchMotohub({ query, regionId: settings.regionId, language }).slice(0, 4);
+  }, [language, query, settings.regionId]);
 
-  if (section) {
-    const Icon = section.icon;
-    return (
-      <section className="page detail-page">
-        <Link className="back-link" to="/home">
-          <ArrowLeft size={18} />
-          Главная
-        </Link>
+  function openSearch(params: { q?: string; type?: string; category?: string; date?: string; featured?: boolean }) {
+    const next = new URLSearchParams();
+    if (params.q) next.set('q', params.q);
+    if (params.type && params.type !== 'all') next.set('type', params.type);
+    if (params.category) next.set('category', params.category);
+    if (params.date) next.set('date', params.date);
+    if (params.featured) next.set('featured', 'true');
+    navigate(`/search?${next.toString()}`);
+  }
 
-        <header className="detail-hero">
-          <span className="detail-hero__icon">
-            <Icon size={26} aria-hidden="true" />
-          </span>
-          <p className="eyebrow">Раздел</p>
-          <h1>{section.title}</h1>
-          <p>{section.intro}</p>
-        </header>
-
-        <section className="section-block">
-          <h2>Что будет внутри</h2>
-          <div className="subsection-list">
-            {section.topics.map((topic) => (
-              <article className="subsection-card" key={topic}>
-                <strong>{topic}</strong>
-                <span>Пока короткая заглушка. Позже добавим текст, чек-листы, видео и материалы MG67.</span>
-              </article>
-            ))}
-          </div>
-        </section>
-      </section>
-    );
+  function submitSearch(event: FormEvent) {
+    event.preventDefault();
+    openSearch({ q: query.trim() });
   }
 
   return (
-    <section className="page home-hub">
-      <header className="home-intro">
-        <div className="home-brand">
-          <span>Rider Next</span>
-          <strong>от MG67 Moto Guide</strong>
+    <section className="motohub-screen">
+      <header className="motohub-hero">
+        <div className="motohub-topbar">
+          <div className="motohub-brand-wrap">
+            <Link className="motohub-logo" to="/search" aria-label={t('home.logoLabel')}>
+              <img src="/assets/brand/motohub-logo-horizontal-transparent.png" alt={t('home.logoLabel')} />
+            </Link>
+            <Link className="motohub-location" to="/region">
+              <MapPin size={16} aria-hidden="true" />
+              <span>{savedRegion}</span>
+              <ChevronRight size={15} aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="motohub-actions">
+            <Link className="round-action" to="/notifications" aria-label={t('home.notificationsLabel')}>
+              <Bell size={20} aria-hidden="true" />
+            </Link>
+            <Link className="round-action" to="/profile" aria-label={t('home.profileLabel')}>
+              <UserRound size={21} aria-hidden="true" />
+            </Link>
+          </div>
         </div>
-        <h1>Наставник мотоциклиста</h1>
-        <p>
-          Права, первый мотоцикл, экипировка, обслуживание, навыки и поездки -
-          всё, что нужно новичку в первый сезон.
-        </p>
+
+        <div className="motohub-hero-copy">
+          <h1>{t('home.heroTitle')}</h1>
+          <p>{t('home.heroSubtitle')}</p>
+        </div>
+
+        <form className="motohub-search" onSubmit={submitSearch}>
+          <Search size={22} aria-hidden="true" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('home.searchPlaceholder')} />
+          <button type="button" aria-label={t('home.voiceSearch')} title={t('home.voiceSearch')} disabled>
+            <Mic size={19} aria-hidden="true" />
+          </button>
+        </form>
+        {suggestions.length ? (
+          <div className="home-search-suggestions">
+            {suggestions.map(({ item }) => {
+              const title = getLocalizedText(item.title, language);
+              return (
+                <button type="button" key={item.id} onClick={() => openSearch({ q: query })}>
+                  <Search size={15} aria-hidden="true" />
+                  <span>{title}</span>
+                  <small>{getLocalizedText(item.description, language)}</small>
+                </button>
+              );
+            })}
+            <button className="home-search-suggestions__all" type="button" onClick={() => openSearch({ q: query })}>
+              {t('search.submit')}
+              <ChevronRight size={16} aria-hidden="true" />
+            </button>
+          </div>
+        ) : null}
       </header>
 
-      <div className="section-grid">
-        {homeInfoSections.map((section) => {
-          const Icon = section.icon;
-          return (
-            <Link className="section-card" key={section.id} to={`/home/${section.id}`}>
-              <span className="section-card__icon">
-                <Icon size={22} aria-hidden="true" />
-              </span>
-              <span className="section-card__copy">
-                <strong>{section.title}</strong>
-                <small>{section.description}</small>
-              </span>
-              <ChevronRight className="section-card__arrow" size={18} aria-hidden="true" />
-            </Link>
-          );
-        })}
-      </div>
+      <main className="motohub-content">
+        <section className="motohub-section">
+          <h2>{t('home.popularTitle')}</h2>
+          <div className="quick-scroll" aria-label={t('home.popularLabel')}>
+            {popularQueries.map((item) => {
+              const Icon = item.icon;
+              const title = getLocalizedText(item.title, language);
+              return (
+                <button className="quick-card" key={title} type="button" onClick={() => openSearch({ q: item.query, type: item.type, category: item.category, date: item.date })}>
+                  <Icon size={27} strokeWidth={2} aria-hidden="true" />
+                  <span>{title}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
 
-      <section className="start-helper">
-        <div>
-          <h2>Не знаешь, с чего начать?</h2>
-          <p>Ответь на один вопрос, и Rider Next покажет ближайший следующий шаг.</p>
-        </div>
-        <Link className="primary-action" to="/onboarding">
-          <Route size={20} />
-          Подобрать мой следующий шаг
-        </Link>
-      </section>
+        <section className="mg67-card">
+          <div className="mg67-card__icon">
+            <Flame size={17} aria-hidden="true" />
+          </div>
+          <div className="mg67-card__copy">
+            <p>{t('home.mg67Label')}</p>
+            <h2>{t('home.mg67Title')}</h2>
+            <span>{t('home.mg67Text')}</span>
+          </div>
+          <Link to="/tip/pressure-before-ride">
+            {t('home.details')}
+            <ChevronRight size={18} aria-hidden="true" />
+          </Link>
+        </section>
+
+        <section className="motohub-section">
+          <h2>{t('home.usefulNearby')}</h2>
+          <div className="places-grid">
+            {verifiedPlaces.map((item) => {
+              const Icon = item.icon;
+              const title = getLocalizedText(item.title, language);
+              return (
+                <button className="place-card" key={title} type="button" onClick={() => openSearch({ type: item.type, category: item.category })}>
+                  <span>
+                    <Icon size={23} strokeWidth={2} aria-hidden="true" />
+                  </span>
+                  <strong>{title}</strong>
+                  <small>{item.description ? getLocalizedText(item.description, language) : null}</small>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="motohub-section">
+          <div className="section-heading-row">
+            <h2>{t('home.recommendedToday')}</h2>
+            <button type="button" onClick={() => openSearch({ featured: true })}>
+              {t('common.all')}
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
+          </div>
+
+          <div className="recommend-scroll" aria-label={t('home.recommendationsLabel')}>
+            {recommendations.map((item) => {
+              const Icon = item.icon;
+              const title = getLocalizedText(item.title, language);
+              const isFavorite = favorites.some((favorite) => favorite.id === item.id && favorite.type === item.type);
+              return (
+                <article className="recommend-card" key={title} style={{ backgroundImage: `url(${item.image})` }}>
+                  <div className="recommend-card__top">
+                    <span>{getLocalizedText(item.label, language)}</span>
+                    <button
+                      className={isFavorite ? 'is-active' : ''}
+                      type="button"
+                      aria-label={isFavorite ? t('favorites.removeLabel') : t('home.favoriteAdd')}
+                      onClick={() => {
+                        const added = toggleFavorite({ id: item.id, type: item.type, title, description: getLocalizedText(item.details, language) });
+                        showToast(added ? t('favorites.addedToast') : t('favorites.removedToast'));
+                      }}
+                    >
+                      <Icon size={18} aria-hidden="true" />
+                    </button>
+                  </div>
+                  <Link className="recommend-card__copy" to={getSearchItemPath(item)}>
+                    <h3>{title}</h3>
+                    <p>{getLocalizedText(item.details, language)}</p>
+                    <small>
+                      <MapPin size={14} aria-hidden="true" />
+                      {getLocalizedText(item.note, language)}
+                    </small>
+                  </Link>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+      </main>
     </section>
   );
 }
