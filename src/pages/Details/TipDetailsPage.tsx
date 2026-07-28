@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { findTip } from '../../data/tipsContent';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
+import { ImageWithFallback } from '../../shared/ui/ImageWithFallback';
 
 export function TipDetailsPage() {
   const { id } = useParams();
@@ -43,7 +44,7 @@ export function TipDetailsPage() {
       </button>
 
       <article className="detail-hero-card">
-        <img src={tip.image} alt="" />
+        <ImageWithFallback src={tip.image} alt={getLocalizedText(tip.title, language)} />
         <div className="detail-hero-card__shade" />
         <div className="detail-hero-card__content">
           <span className="detail-kicker"><Flame size={15} /> {t('home.mg67Label')}</span>

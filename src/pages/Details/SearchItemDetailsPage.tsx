@@ -5,6 +5,7 @@ import { findSearchItem } from '../../features/search/searchLinks';
 import { getLocalizedText, type LocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
+import { ImageWithFallback } from '../../shared/ui/ImageWithFallback';
 import { showToast } from '../../shared/ui/toastStore';
 
 const categoryLabelById = {
@@ -95,7 +96,7 @@ export function SearchItemDetailsPage() {
   const meta = typeMeta[item.type];
   const Icon = meta.icon;
   const isFavorite = favorites.some((favorite) => favorite.id === item.id && favorite.type === item.type);
-  const important = item.type === 'route' ? routeImportant : item.type === 'event' ? eventImportant : placeImportant;
+  const important = item.details?.warnings?.length ? item.details.warnings : item.type === 'route' ? routeImportant : item.type === 'event' ? eventImportant : placeImportant;
 
   return (
     <section className="motohub-screen simple-screen detail-screen">
@@ -105,7 +106,7 @@ export function SearchItemDetailsPage() {
       </button>
 
       <article className="detail-hero-card">
-        {item.image ? <img src={item.image} alt="" /> : null}
+        <ImageWithFallback src={item.image} alt={title} />
         <div className="detail-hero-card__shade" />
         <div className="detail-hero-card__content">
           <span className="detail-kicker"><Icon size={15} /> {t(meta.kicker)}</span>
@@ -144,6 +145,8 @@ export function SearchItemDetailsPage() {
           {item.meta.date ? <div><span>{t('details.date')}</span><strong>{getLocalizedText(item.meta.date, language)}</strong></div> : null}
           {item.meta.place ? <div><span>{t('details.place')}</span><strong>{getLocalizedText(item.meta.place, language)}</strong></div> : null}
           {item.meta.organizer ? <div><span>{t('details.organizer')}</span><strong>{getLocalizedText(item.meta.organizer, language)}</strong></div> : null}
+          {item.details?.format ? <div><span>Формат</span><strong>{getLocalizedText(item.details.format, language)}</strong></div> : null}
+          {item.details?.cost ? <div><span>Условия</span><strong>{getLocalizedText(item.details.cost, language)}</strong></div> : null}
           {item.details?.surface ? <div><span>{t('details.surface')}</span><strong>{getLocalizedText(item.details.surface, language)}</strong></div> : null}
           {item.details?.suitableFor ? <div><span>{t('details.suitableFor')}</span><strong>{getLocalizedText(item.details.suitableFor, language)}</strong></div> : null}
         </section>

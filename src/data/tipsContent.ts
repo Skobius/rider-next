@@ -36,7 +36,7 @@ export const tipsContent: TipItem[] = [
       en: 'Use exact pressure values from your motorcycle manual or factory label.',
     },
     related: [
-      { ru: 'Демо мотошиномонтаж', en: 'Demo motorcycle tire fitting' },
+      { ru: 'Пример мотошиномонтажа', en: 'Sample motorcycle tire fitting' },
       { ru: 'Сервисы и ремонт', en: 'Service and repair' },
     ],
   },

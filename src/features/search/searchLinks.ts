@@ -1,4 +1,7 @@
-import { searchContent, type SearchItem, type SearchItemType } from '../../data/searchContent';
+import { events } from '../../data/events';
+import { places } from '../../data/places';
+import { routes } from '../../data/routes';
+import { type SearchItem, type SearchItemType } from '../../data/searchContent';
 
 const detailPathByType: Record<SearchItemType, string> = {
   place: 'place',
@@ -12,5 +15,5 @@ export function getSearchItemPath(item: Pick<SearchItem, 'id' | 'type'>) {
 
 export function findSearchItem(type: SearchItemType, id: string | undefined) {
   if (!id) return undefined;
-  return searchContent.find((item) => item.type === type && item.id === id);
+  return [...places, ...routes, ...events].find((item) => item.type === type && item.id === id);
 }

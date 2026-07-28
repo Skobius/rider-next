@@ -2,13 +2,14 @@ import { Bell, ChevronRight, Flame, MapPin, Mic, Search, UserRound } from 'lucid
 import { FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getRegionLabel } from '../../data/regions';
-import { popularQueries, recommendations, verifiedPlaces } from '../../data/motohubHome';
-import { getSearchItemPath } from '../../features/search/searchLinks';
+import { getRecommendations, popularQueries } from '../../data/motohubHome';
+import { appSections } from '../../data/sections';
 import { searchMotohub } from '../../features/search/searchEngine';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
 import { useGuestSettings } from '../../shared/storage/guestSettings';
+import { getContentIcon } from '../../shared/ui/contentIcons';
 import { showToast } from '../../shared/ui/toastStore';
 
 export function HomePage() {
@@ -18,6 +19,7 @@ export function HomePage() {
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const savedRegion = getRegionLabel(settings.regionId);
+  const recommendations = useMemo(() => getRecommendations(settings.regionId), [settings.regionId]);
   const suggestions = useMemo(() => {
     if (query.trim().length < 2) return [];
     return searchMotohub({ query, regionId: settings.regionId, language }).slice(0, 4);
@@ -121,26 +123,32 @@ export function HomePage() {
             <h2>{t('home.mg67Title')}</h2>
             <span>{t('home.mg67Text')}</span>
           </div>
-          <Link to="/tip/pressure-before-ride">
+          <Link to="/guides/motorcycle-tire-pressure">
             {t('home.details')}
             <ChevronRight size={18} aria-hidden="true" />
           </Link>
         </section>
 
         <section className="motohub-section">
-          <h2>{t('home.usefulNearby')}</h2>
-          <div className="places-grid">
-            {verifiedPlaces.map((item) => {
-              const Icon = item.icon;
+          <div className="section-heading-row">
+            <h2>{t('home.usefulNearby')}</h2>
+            <Link to="/sections">
+              {t('sections.allSections')}
+              <ChevronRight size={18} aria-hidden="true" />
+            </Link>
+          </div>
+          <div className="places-grid sections-home-grid">
+            {appSections.map((item, index) => {
+              const Icon = getContentIcon(item.icon);
               const title = getLocalizedText(item.title, language);
               return (
-                <button className="place-card" key={title} type="button" onClick={() => openSearch({ type: item.type, category: item.category })}>
+                <Link className={`place-card section-home-card ${index === 4 ? 'section-home-card--wide' : ''}`} key={item.id} to={`/sections/${item.slug}`}>
                   <span>
                     <Icon size={23} strokeWidth={2} aria-hidden="true" />
                   </span>
                   <strong>{title}</strong>
-                  <small>{item.description ? getLocalizedText(item.description, language) : null}</small>
-                </button>
+                  <small>{getLocalizedText(item.description, language)}</small>
+                </Link>
               );
             })}
           </div>
@@ -159,7 +167,7 @@ export function HomePage() {
             {recommendations.map((item) => {
               const Icon = item.icon;
               const title = getLocalizedText(item.title, language);
-              const isFavorite = favorites.some((favorite) => favorite.id === item.id && favorite.type === item.type);
+              const isFavorite = item.favoriteType ? favorites.some((favorite) => favorite.id === item.id && favorite.type === item.favoriteType) : false;
               return (
                 <article className="recommend-card" key={title} style={{ backgroundImage: `url(${item.image})` }}>
                   <div className="recommend-card__top">
@@ -167,16 +175,18 @@ export function HomePage() {
                     <button
                       className={isFavorite ? 'is-active' : ''}
                       type="button"
+                      disabled={!item.favoriteType}
                       aria-label={isFavorite ? t('favorites.removeLabel') : t('home.favoriteAdd')}
                       onClick={() => {
-                        const added = toggleFavorite({ id: item.id, type: item.type, title, description: getLocalizedText(item.details, language) });
+                        if (!item.favoriteType) return;
+                        const added = toggleFavorite({ id: item.id, type: item.favoriteType, title, description: getLocalizedText(item.details, language) });
                         showToast(added ? t('favorites.addedToast') : t('favorites.removedToast'));
                       }}
                     >
                       <Icon size={18} aria-hidden="true" />
                     </button>
                   </div>
-                  <Link className="recommend-card__copy" to={getSearchItemPath(item)}>
+                  <Link className="recommend-card__copy" to={item.path}>
                     <h3>{title}</h3>
                     <p>{getLocalizedText(item.details, language)}</p>
                     <small>

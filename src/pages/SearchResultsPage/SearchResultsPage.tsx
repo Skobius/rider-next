@@ -2,20 +2,23 @@ import { ArrowLeft, ExternalLink, Heart, MapPin, Search, SlidersHorizontal, X } 
 import { FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { SearchCategory, SearchDateFilter, SearchItemType } from '../../data/searchContent';
-import { getSearchItemPath } from '../../features/search/searchLinks';
-import { searchMotohub } from '../../features/search/searchEngine';
+import { getSearchEntityLabelKey, searchMotohub, type SearchEntityType } from '../../features/search/searchEngine';
+import { places } from '../../data/places';
 import { getRegionLabel } from '../../data/regions';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
 import { useGuestSettings } from '../../shared/storage/guestSettings';
+import { PlaceCard } from '../../shared/ui/PlaceCard';
+import { ImageWithFallback } from '../../shared/ui/ImageWithFallback';
 import { showToast } from '../../shared/ui/toastStore';
 
-const typeFilters: Array<{ id: SearchItemType | 'all'; labelKey: string }> = [
+const typeFilters: Array<{ id: SearchEntityType | 'all'; labelKey: string }> = [
   { id: 'all', labelKey: 'search.all' },
   { id: 'place', labelKey: 'search.places' },
   { id: 'route', labelKey: 'search.routes' },
   { id: 'event', labelKey: 'search.events' },
+  { id: 'skill', labelKey: 'search.skills' },
 ];
 
 const categoryLabels: Record<SearchCategory, string> = {
@@ -29,8 +32,8 @@ const categoryLabels: Record<SearchCategory, string> = {
   storage: 'search.categoryStorage',
 };
 
-function readType(value: string | null): SearchItemType | 'all' {
-  return value === 'place' || value === 'route' || value === 'event' ? value : 'all';
+function readType(value: string | null): SearchEntityType | 'all' {
+  return value === 'place' || value === 'route' || value === 'event' || value === 'skill' ? value : 'all';
 }
 
 function readCategory(value: string | null): SearchCategory | 'all' {
@@ -42,7 +45,7 @@ function readDate(value: string | null): SearchDateFilter | undefined {
   return value === 'today' || value === 'evening' || value === 'upcoming' ? value : undefined;
 }
 
-function getContextTitle(params: { query: string; type: SearchItemType | 'all'; category: SearchCategory | 'all'; date?: SearchDateFilter; featured: boolean; t: (key: string) => string }) {
+function getContextTitle(params: { query: string; type: SearchEntityType | 'all'; category: SearchCategory | 'all'; date?: SearchDateFilter; featured: boolean; t: (key: string) => string }) {
   if (params.query) return params.query;
   if (params.featured) return params.t('search.contextFeatured');
   if (params.category === 'service') return params.t('search.contextService');
@@ -52,7 +55,12 @@ function getContextTitle(params: { query: string; type: SearchItemType | 'all'; 
   if (params.type === 'event' && params.date === 'evening') return params.t('search.contextEventsEvening');
   if (params.type === 'route') return params.t('search.contextRoutes');
   if (params.type === 'event') return params.t('search.contextEvents');
+  if (params.type === 'skill') return params.t('search.contextSkills');
   return params.t('home.heroTitle');
+}
+
+function canFavorite(type: string): type is SearchItemType {
+  return type === 'place' || type === 'route' || type === 'event';
 }
 
 export function SearchResultsPage() {
@@ -73,7 +81,7 @@ export function SearchResultsPage() {
   const region = getRegionLabel(settings.regionId);
   const title = getContextTitle({ query, type, category, date, featured, t });
 
-  function updateSearch(next: { q?: string; type?: SearchItemType | 'all'; category?: SearchCategory | 'all' }) {
+  function updateSearch(next: { q?: string; type?: SearchEntityType | 'all'; category?: SearchCategory | 'all' }) {
     const nextParams = new URLSearchParams(params);
     const nextQuery = next.q ?? query;
     const nextType = next.type ?? type;
@@ -137,25 +145,34 @@ export function SearchResultsPage() {
       {results.length ? (
         <div className="search-results-list">
           {results.map(({ item }) => {
+            if (item.type === 'place') {
+              const place = places.find((placeItem) => placeItem.id === item.id);
+              if (place) return <PlaceCard place={place} from={locationState} key={item.id} />;
+            }
+
             const title = getLocalizedText(item.title, language);
             const description = getLocalizedText(item.description, language);
-            const isFavorite = favorites.some((favorite) => favorite.id === item.id && favorite.type === item.type);
+            const favoriteType = canFavorite(item.type) ? item.type : undefined;
+            const isFavorite = favoriteType ? favorites.some((favorite) => favorite.id === item.id && favorite.type === favoriteType) : false;
 
             return (
               <article className="search-result-card" key={item.id}>
+                <span className="search-result-card__visual">
+                  {item.image ? <ImageWithFallback src={item.image} alt={title} /> : <Search size={24} aria-hidden="true" />}
+                </span>
                 <div className="search-result-card__main">
-                  <span>{t(categoryLabels[item.category])}</span>
+                  <span>{item.category ? t(categoryLabels[item.category]) : t(getSearchEntityLabelKey(item.type))}</span>
                   <h2>{title}</h2>
                   <p>{description}</p>
-                  {item.services?.length ? (
+                  {'services' in item && item.services?.length ? (
                     <small>{t('search.services')}: {item.services.map((service) => getLocalizedText(service, language)).join(', ')}</small>
                   ) : null}
                   <div className="search-result-card__badges">
-                    <b>{item.verified ? t('search.verified') : t('search.notVerified')}</b>
-                    {item.demo ? <b>{t('search.demo')}</b> : null}
+                    {'verified' in item ? <b>{item.verified ? t('search.verified') : t('search.notVerified')}</b> : <b>{t(getSearchEntityLabelKey(item.type))}</b>}
+                    {'demo' in item && item.demo ? <b>{t('search.demo')}</b> : null}
                   </div>
                 </div>
-                {item.meta ? (
+                {'meta' in item && item.meta ? (
                   <div className="search-result-card__meta">
                     {item.meta.distance ? <span>{getLocalizedText(item.meta.distance, language)}</span> : null}
                     {item.meta.duration ? <span>{getLocalizedText(item.meta.duration, language)}</span> : null}
@@ -165,18 +182,20 @@ export function SearchResultsPage() {
                   </div>
                 ) : null}
                 <div className="search-result-card__actions">
-                  <button
-                    type="button"
-                    className={isFavorite ? 'is-active' : ''}
-                    onClick={() => {
-                      const added = toggleFavorite({ id: item.id, type: item.type, title, description });
-                      showToast(added ? t('favorites.addedToast') : t('favorites.removedToast'));
-                    }}
-                    aria-label={isFavorite ? t('favorites.removeLabel') : t('home.favoriteAdd')}
-                  >
-                    <Heart size={17} />
-                  </button>
-                  <Link to={getSearchItemPath(item)} state={{ from: locationState }}>
+                  {favoriteType ? (
+                    <button
+                      type="button"
+                      className={isFavorite ? 'is-active' : ''}
+                      onClick={() => {
+                        const added = toggleFavorite({ id: item.id, type: favoriteType, title, description });
+                        showToast(added ? t('favorites.addedToast') : t('favorites.removedToast'));
+                      }}
+                      aria-label={isFavorite ? t('favorites.removeLabel') : t('home.favoriteAdd')}
+                    >
+                      <Heart size={17} />
+                    </button>
+                  ) : <span />}
+                  <Link to={item.targetPath} state={{ from: locationState }}>
                     {t('search.open')}
                     <ExternalLink size={16} />
                   </Link>

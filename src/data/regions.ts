@@ -12,7 +12,16 @@ export interface Region {
   shortName?: string;
   type: RegionType;
   isAvailable: boolean;
+  mapCenter?: [number, number];
+  mapZoom?: number;
+  contentStatus?: RegionContentStatus;
 }
+
+export type RegionContentStatus = 'not_started' | 'in_progress' | 'ready';
+
+const regionContentStatusById: Partial<Record<string, RegionContentStatus>> = {
+  'smolensk-oblast': 'ready',
+};
 
 export const defaultRegionId = 'smolensk-oblast';
 
@@ -88,7 +97,7 @@ export const regions: Region[] = [
   { id: 'saratov-oblast', name: 'Саратовская область', type: 'oblast', isAvailable: false },
   { id: 'sakhalin-oblast', name: 'Сахалинская область', type: 'oblast', isAvailable: false },
   { id: 'sverdlovsk-oblast', name: 'Свердловская область', type: 'oblast', isAvailable: false },
-  { id: 'smolensk-oblast', name: 'Смоленская область', shortName: 'Смоленск и область', type: 'oblast', isAvailable: true },
+  { id: 'smolensk-oblast', name: 'Смоленская область', shortName: 'Смоленск и область', type: 'oblast', isAvailable: true, mapCenter: [32.0453, 54.7826], mapZoom: 11 },
   { id: 'tambov-oblast', name: 'Тамбовская область', type: 'oblast', isAvailable: false },
   { id: 'tver-oblast', name: 'Тверская область', type: 'oblast', isAvailable: false },
   { id: 'tomsk-oblast', name: 'Томская область', type: 'oblast', isAvailable: false },
@@ -115,4 +124,34 @@ export function getRegionById(id: string) {
 export function getRegionLabel(id: string) {
   const region = getRegionById(id);
   return region.shortName ?? region.name;
+}
+
+export function getRegionContentStatus(id: string): RegionContentStatus {
+  return regionContentStatusById[id] ?? getRegionById(id).contentStatus ?? 'not_started';
+}
+
+export function getRegionMapLocation(id: string) {
+  const region = getRegionById(id);
+  return {
+    center: region.mapCenter,
+    zoom: region.mapZoom ?? 10,
+  };
+}
+
+export function getRegionContentStatusText(status: RegionContentStatus) {
+  if (status === 'ready') return 'Регион наполнен';
+  if (status === 'in_progress') return 'Регион находится в процессе наполнения';
+  return 'Регион пока не наполнен';
+}
+
+export function getRegionContentNotice(status: RegionContentStatus) {
+  if (status === 'in_progress') {
+    return 'Мы уже собираем и проверяем информацию для этого региона. Сейчас доступна только часть материалов.';
+  }
+
+  if (status === 'not_started') {
+    return 'Этот регион пока не наполнен. Сейчас в MotoHub подготовлена информация по Смоленской области. Материалы для других регионов будут добавляться постепенно.';
+  }
+
+  return '';
 }
