@@ -1,5 +1,9 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
+import { AdminContentPage } from '../pages/Admin/AdminContentPage';
+import { AdminUsersPage } from '../pages/Admin/AdminUsersPage';
+import { AuditLogPage } from '../pages/Admin/AuditLogPage';
+import { ModerationPage } from '../pages/Admin/ModerationPage';
 import { AuthPlaceholderPage } from '../pages/AuthPlaceholderPage';
 import { FavoritesPage } from '../pages/FavoritesPage';
 import { FeedbackPage } from '../pages/FeedbackPage';
@@ -13,6 +17,10 @@ import { LegalPlaceholderPage } from '../pages/Info/LegalPlaceholderPage';
 import { InstallPage } from '../pages/InstallPage';
 import { NotificationsPage } from '../pages/NotificationsPage';
 import { ProfilePage } from '../pages/ProfilePage';
+import { AccountPage } from '../pages/Profile/AccountPage';
+import { MyClaimsPage } from '../pages/Profile/MyClaimsPage';
+import { MyOrganizationsPage } from '../pages/Profile/MyOrganizationsPage';
+import { MySubmissionsPage } from '../pages/Profile/MySubmissionsPage';
 import { RegionPage } from '../pages/RegionPage';
 import { SearchResultsPage } from '../pages/SearchResultsPage/SearchResultsPage';
 import { CategoryPage } from '../pages/Sections/CategoryPage';
@@ -75,6 +83,14 @@ export function App() {
           <Route path="/map" element={<Suspense fallback={<MapPageFallback />}><MapPage /></Suspense>} />
           <Route path="/favorites" element={<FavoritesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/account" element={<AccountPage />} />
+          <Route path="/profile/submissions" element={<MySubmissionsPage />} />
+          <Route path="/profile/claims" element={<MyClaimsPage />} />
+          <Route path="/profile/organizations" element={<MyOrganizationsPage />} />
+          <Route path="/moderation" element={<ModerationPage />} />
+          <Route path="/admin/content" element={<AdminContentPage />} />
+          <Route path="/admin/users" element={<AdminUsersPage />} />
+          <Route path="/admin/audit" element={<AuditLogPage />} />
           <Route path="/install" element={<InstallPage />} />
           <Route path="/settings/language" element={<LanguagePage />} />
           <Route path="/settings/theme" element={<ThemePage />} />

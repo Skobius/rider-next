@@ -1,7 +1,8 @@
 import { AlertTriangle, ArrowLeft, ExternalLink, Heart, MapPin, Phone, ShieldCheck } from 'lucide-react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { appCategories } from '../../data/categories';
-import { findPlaceById, getPlacePrimaryBranch, productLabels, verificationLabels } from '../../data/places';
+import { getPlacePrimaryBranch, productLabels, verificationLabels } from '../../data/places';
+import { useBackendContent } from '../../shared/content/backendContent';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
@@ -22,9 +23,11 @@ export function PlaceDetailsPage() {
   const location = useLocation();
   const favorites = useFavorites();
   const { language, t } = useI18n();
-  const place = findPlaceById(id);
+  const backendContent = useBackendContent();
+  const place = id ? backendContent.places.find((item) => item.id === id) : undefined;
 
-  if (!place) return <Navigate to="/sections/places" replace />;
+  if (!place && !backendContent.loading) return <Navigate to="/sections/places" replace />;
+  if (!place) return <section className="motohub-screen simple-screen"><section className="empty-state"><h2>Загружаем карточку</h2><p>Секунду.</p></section></section>;
 
   const from = typeof location.state === 'object' && location.state && 'from' in location.state
     ? String(location.state.from)

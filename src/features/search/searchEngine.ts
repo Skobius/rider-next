@@ -35,6 +35,12 @@ export interface SearchParams {
   featured?: boolean;
 }
 
+export interface SearchContentOverride {
+  places?: typeof places;
+  routes?: typeof routes;
+  events?: typeof events;
+}
+
 export interface SearchResult {
   item: SearchEntity;
   score: number;
@@ -177,8 +183,11 @@ function getGuideSearchCategory(categoryId: string, sectionId: string): SearchCa
   return undefined;
 }
 
-function searchEntities(): SearchEntity[] {
-  const placeEntities: SearchEntity[] = [...places, ...routes, ...events].map((item) => ({ ...item, targetPath: getItemTargetPath(item) }));
+function searchEntities(content?: SearchContentOverride): SearchEntity[] {
+  const contentPlaces = content?.places ?? places;
+  const contentRoutes = content?.routes ?? routes;
+  const contentEvents = content?.events ?? events;
+  const placeEntities: SearchEntity[] = [...contentPlaces, ...contentRoutes, ...contentEvents].map((item) => ({ ...item, targetPath: getItemTargetPath(item) }));
   const guideEntities: SearchEntity[] = guides.map((guide) => ({
       id: guide.id,
       type: 'guide',
@@ -311,11 +320,11 @@ function matchesFeatured(item: SearchEntity, featured: boolean | undefined) {
   return !featured || ('featured' in item && item.featured);
 }
 
-export function searchMotohub(params: SearchParams): SearchResult[] {
+export function searchMotohub(params: SearchParams, content?: SearchContentOverride): SearchResult[] {
   const queryTokens = tokenize(params.query ?? '');
   const tokens = expandTokens(queryTokens);
 
-  return searchEntities()
+  return searchEntities(content)
     .filter((item) => matchesRegion(item, params.regionId))
     .filter((item) => matchesType(item, params.type))
     .filter((item) => matchesCategory(item, params.category))

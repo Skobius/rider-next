@@ -2,6 +2,7 @@ import { ArrowLeft, CalendarDays, CheckCircle2, ExternalLink, Heart, MapPin, Nav
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import type { SearchItemType } from '../../data/searchContent';
 import { findSearchItem } from '../../features/search/searchLinks';
+import { useBackendContent } from '../../shared/content/backendContent';
 import { getLocalizedText, type LocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
@@ -65,7 +66,11 @@ export function SearchItemDetailsPage() {
   const favorites = useFavorites();
   const { language, t } = useI18n();
   const type = getTypeFromPath(location.pathname);
-  const item = findSearchItem(type, id);
+  const backendContent = useBackendContent();
+  const backendItem = id
+    ? [...backendContent.routes, ...backendContent.events].find((contentItem) => contentItem.type === type && contentItem.id === id)
+    : undefined;
+  const item = backendItem ?? findSearchItem(type, id);
   const from = typeof location.state === 'object' && location.state && 'from' in location.state
     ? String(location.state.from)
     : undefined;

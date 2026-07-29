@@ -10,10 +10,11 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { appCategories } from '../data/categories';
-import { events } from '../data/events';
-import { places, verificationLabels, type PlaceItem } from '../data/places';
+import type { EventItem } from '../data/events';
+import { verificationLabels, type PlaceItem } from '../data/places';
 import { getRegionContentStatus, getRegionLabel, getRegionMapLocation } from '../data/regions';
-import { routes } from '../data/routes';
+import type { RouteItem } from '../data/routes';
+import { useBackendContent } from '../shared/content/backendContent';
 import { getLocalizedText } from '../shared/i18n/localizedText';
 import { useI18n } from '../shared/i18n/useI18n';
 import { useGuestSettings } from '../shared/storage/guestSettings';
@@ -104,7 +105,7 @@ function loadYandexMaps() {
   return yandexMapsPromise;
 }
 
-function getPlacePoints(regionId: string): MapPoint[] {
+function getPlacePoints(regionId: string, places: PlaceItem[]): MapPoint[] {
   return places
     .filter((place) => place.regionId === regionId)
     .filter((place) => place.mapVisibility !== false && place.coordinates)
@@ -123,7 +124,7 @@ function getPlacePoints(regionId: string): MapPoint[] {
     }));
 }
 
-function getRoutePoints(regionId: string): MapPoint[] {
+function getRoutePoints(regionId: string, routes: RouteItem[]): MapPoint[] {
   return routes
     .filter((route) => route.regionId === regionId && route.coordinates)
     .map((route) => ({
@@ -140,7 +141,7 @@ function getRoutePoints(regionId: string): MapPoint[] {
     }));
 }
 
-function getEventPoints(regionId: string): MapPoint[] {
+function getEventPoints(regionId: string, events: EventItem[]): MapPoint[] {
   return events
     .filter((event) => event.regionId === regionId && event.coordinates)
     .map((event) => ({
@@ -157,8 +158,8 @@ function getEventPoints(regionId: string): MapPoint[] {
     }));
 }
 
-function getPoints(regionId: string) {
-  return [...getPlacePoints(regionId), ...getRoutePoints(regionId), ...getEventPoints(regionId)];
+function getPoints(regionId: string, content: { places: PlaceItem[]; routes: RouteItem[]; events: EventItem[] }) {
+  return [...getPlacePoints(regionId, content.places), ...getRoutePoints(regionId, content.routes), ...getEventPoints(regionId, content.events)];
 }
 
 function getInitialLocation(regionId: string) {
@@ -335,11 +336,12 @@ function PointPreview({ point, onClose }: { point: MapPoint; onClose: () => void
 
 export function MapPage() {
   const settings = useGuestSettings();
+  const backendContent = useBackendContent();
   const [selectedType, setSelectedType] = useState<'all' | MapPoint['type']>('all');
   const [selectedPlaceCategory, setSelectedPlaceCategory] = useState('all');
   const [selectedPoint, setSelectedPoint] = useState<MapPoint | null>(null);
-  const regionPlaces = useMemo(() => places.filter((place) => place.regionId === settings.regionId), [settings.regionId]);
-  const allPoints = useMemo(() => getPoints(settings.regionId), [settings.regionId]);
+  const regionPlaces = useMemo(() => backendContent.places.filter((place) => place.regionId === settings.regionId), [backendContent.places, settings.regionId]);
+  const allPoints = useMemo(() => getPoints(settings.regionId, backendContent), [backendContent, settings.regionId]);
   const placeCategoryFilters = useMemo(() => (
     appCategories
       .filter((category) => category.sectionId === 'places')

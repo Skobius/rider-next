@@ -3,8 +3,8 @@ import { FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import type { SearchCategory, SearchDateFilter, SearchItemType } from '../../data/searchContent';
 import { getSearchEntityLabelKey, searchMotohub, type SearchEntityType } from '../../features/search/searchEngine';
-import { places } from '../../data/places';
 import { getRegionLabel } from '../../data/regions';
+import { useBackendContent } from '../../shared/content/backendContent';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
@@ -70,6 +70,7 @@ export function SearchResultsPage() {
   const settings = useGuestSettings();
   const favorites = useFavorites();
   const { language, t } = useI18n();
+  const backendContent = useBackendContent();
   const query = params.get('q') ?? '';
   const type = readType(params.get('type'));
   const category = readCategory(params.get('category'));
@@ -77,7 +78,10 @@ export function SearchResultsPage() {
   const featured = params.get('featured') === 'true';
   const [value, setValue] = useState(query);
 
-  const results = useMemo(() => searchMotohub({ query, regionId: settings.regionId, language, type, category, date, featured }), [category, date, featured, language, query, settings.regionId, type]);
+  const results = useMemo(() => searchMotohub(
+    { query, regionId: settings.regionId, language, type, category, date, featured },
+    { places: backendContent.places, routes: backendContent.routes, events: backendContent.events },
+  ), [backendContent.events, backendContent.places, backendContent.routes, category, date, featured, language, query, settings.regionId, type]);
   const region = getRegionLabel(settings.regionId);
   const title = getContextTitle({ query, type, category, date, featured, t });
 
@@ -146,7 +150,7 @@ export function SearchResultsPage() {
         <div className="search-results-list">
           {results.map(({ item }) => {
             if (item.type === 'place') {
-              const place = places.find((placeItem) => placeItem.id === item.id);
+              const place = backendContent.places.find((placeItem) => placeItem.id === item.id);
               if (place) return <PlaceCard place={place} from={locationState} key={item.id} />;
             }
 

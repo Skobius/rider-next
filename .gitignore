@@ -6,6 +6,8 @@ dist
 .gitrepo
 .ssh-known-hosts
 .bot-source-*
+supabase/.temp/
+supabase/.branches/
 *.local
 *.tsbuildinfo
 .DS_Store

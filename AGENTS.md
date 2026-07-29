@@ -18,6 +18,9 @@
 ## Commands
 
 - `npm run dev` — start local PWA development server.
+- `npm run typecheck` — TypeScript project check.
 - `npm run build` — TypeScript and production build.
-- `npm run test` — local search/content smoke check.
+- `npm run test` — local search/content and backend seed/RLS smoke checks.
 - `npm run i18n:check` — translation key check.
+- `npm run supabase:test:smoke` — staging-safe public Supabase smoke check.
+- `node scripts/export-content-seed.mjs` — regenerate Supabase seed from current static content.

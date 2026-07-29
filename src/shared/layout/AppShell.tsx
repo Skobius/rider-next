@@ -1,7 +1,9 @@
 import { Bell, ChevronRight, Layers3, Map, MapPin, Search, UserRound } from 'lucide-react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { getRegionLabel } from '../../data/regions';
+import { useAuthSession } from '../auth/useAuthSession';
 import { useI18n } from '../i18n/useI18n';
+import { useFavoriteSync } from '../storage/favoritesStore';
 import { useGuestSettings } from '../storage/guestSettings';
 import { useToastMessage } from '../ui/toastStore';
 
@@ -31,9 +33,11 @@ export function AppShell() {
   const { t } = useI18n();
   const toast = useToastMessage();
   const settings = useGuestSettings();
+  const { user } = useAuthSession();
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
   const region = getRegionLabel(settings.regionId);
+  useFavoriteSync(user?.id);
 
   return (
     <div className="motohub-app">
