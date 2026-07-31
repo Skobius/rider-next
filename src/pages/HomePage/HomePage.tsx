@@ -3,6 +3,7 @@ import { FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getRegionLabel } from '../../data/regions';
 import { getRecommendations, popularQueries } from '../../data/motohubHome';
+import { getFeaturedRiderTasks } from '../../data/riderTasks';
 import { appSections } from '../../data/sections';
 import { searchMotohub } from '../../features/search/searchEngine';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
@@ -20,6 +21,7 @@ export function HomePage() {
   const [query, setQuery] = useState('');
   const savedRegion = getRegionLabel(settings.regionId);
   const recommendations = useMemo(() => getRecommendations(settings.regionId), [settings.regionId]);
+  const featuredTasks = useMemo(() => getFeaturedRiderTasks(), []);
   const suggestions = useMemo(() => {
     if (query.trim().length < 2) return [];
     return searchMotohub({ query, regionId: settings.regionId, language }).slice(0, 4);
@@ -45,8 +47,9 @@ export function HomePage() {
       <header className="motohub-hero">
         <div className="motohub-topbar">
           <div className="motohub-brand-wrap">
-            <Link className="motohub-logo" to="/search" aria-label={t('home.logoLabel')}>
-              <img src="/assets/brand/motohub-logo-horizontal-transparent.png" alt={t('home.logoLabel')} />
+            <Link className="motohub-logo" to="/search" aria-label="МотоГде">
+              <img className="motohub-logo__image motohub-logo__image--dark" src="/assets/brand/motogde-logo-dark.png" alt="МотоГде" />
+              <img className="motohub-logo__image motohub-logo__image--light" src="/assets/brand/motogde-logo-light.png" alt="МотоГде" />
             </Link>
             <Link className="motohub-location" to="/region">
               <MapPin size={16} aria-hidden="true" />
@@ -66,13 +69,13 @@ export function HomePage() {
         </div>
 
         <div className="motohub-hero-copy">
-          <h1>{t('home.heroTitle')}</h1>
-          <p>{t('home.heroSubtitle')}</p>
+          <h1>Что вам нужно?</h1>
+          <p>Опишите задачу или выберите готовый сценарий</p>
         </div>
 
         <form className="motohub-search" onSubmit={submitSearch}>
           <Search size={22} aria-hidden="true" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('home.searchPlaceholder')} />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: поменять резину, найти сервис, подготовиться к поездке..." />
           <button type="button" aria-label={t('home.voiceSearch')} title={t('home.voiceSearch')} disabled>
             <Mic size={19} aria-hidden="true" />
           </button>
@@ -99,13 +102,13 @@ export function HomePage() {
 
       <main className="motohub-content">
         <section className="motohub-section">
-          <h2>{t('home.popularTitle')}</h2>
-          <div className="quick-scroll" aria-label={t('home.popularLabel')}>
-            {popularQueries.map((item) => {
-              const Icon = item.icon;
-              const title = getLocalizedText(item.title, language);
+          <h2>Частые задачи</h2>
+          <div className="quick-scroll" aria-label="Частые задачи мотоциклиста">
+            {featuredTasks.map((task) => {
+              const Icon = getContentIcon(task.icon);
+              const title = getLocalizedText(task.shortTitle, language);
               return (
-                <button className="quick-card" key={title} type="button" onClick={() => openSearch({ q: item.query, type: item.type, category: item.category, date: item.date })}>
+                <button className="quick-card" key={task.id} type="button" onClick={() => navigate(`/tasks/${task.slug}`)}>
                   <Icon size={27} strokeWidth={2} aria-hidden="true" />
                   <span>{title}</span>
                 </button>
@@ -127,6 +130,22 @@ export function HomePage() {
             {t('home.details')}
             <ChevronRight size={18} aria-hidden="true" />
           </Link>
+        </section>
+
+        <section className="motohub-section">
+          <h2>Разобраться самому</h2>
+          <div className="quick-scroll" aria-label={t('home.popularLabel')}>
+            {popularQueries.slice(0, 4).map((item) => {
+              const Icon = item.icon;
+              const title = getLocalizedText(item.title, language);
+              return (
+                <button className="quick-card quick-card--secondary" key={title} type="button" onClick={() => openSearch({ q: item.query, type: item.type, category: item.category, date: item.date })}>
+                  <Icon size={24} strokeWidth={2} aria-hidden="true" />
+                  <span>{title}</span>
+                </button>
+              );
+            })}
+          </div>
         </section>
 
         <section className="motohub-section">

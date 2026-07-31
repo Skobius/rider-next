@@ -20,6 +20,13 @@ export interface PlaceContact {
   url?: string;
 }
 
+export interface PlaceStructuredService {
+  id: string;
+  title: LocalizedText;
+  availability: 'available' | 'unknown' | 'unavailable';
+  confirmationStatus: 'unknown' | 'owner_confirmed' | 'moderator_confirmed' | 'user_reported';
+}
+
 export interface PlaceItem extends SearchItem {
   type: 'place';
   slug: string;
@@ -40,6 +47,7 @@ export interface PlaceItem extends SearchItem {
   contacts: PlaceContact[];
   products?: string[];
   features?: string[];
+  structuredServices?: PlaceStructuredService[];
   mg67Comment?: LocalizedText;
   isFeatured?: boolean;
   status: 'placeholder' | 'listed';

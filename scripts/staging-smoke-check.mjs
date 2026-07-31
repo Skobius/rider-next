@@ -40,9 +40,13 @@ const results = {
   events: await visibleCount('events', 2),
   guides: await visibleCount('guides', 10),
   exercises: await visibleCount('exercises', 5),
+  rider_tasks: await visibleCount('rider_tasks', 3),
+  service_definitions: await visibleCount('service_definitions', 8),
+  rider_task_links: await visibleCount('rider_task_links', 10),
+  place_service_definitions: await visibleCount('place_service_definitions', 5),
 };
 
-for (const table of ['places', 'routes', 'events', 'guides', 'exercises', 'categories', 'regions']) {
+for (const table of ['places', 'routes', 'events', 'guides', 'exercises', 'categories', 'regions', 'rider_tasks', 'service_definitions']) {
   const { data, error } = await supabase.from(table).select('id').eq('status', 'draft').limit(1);
   if (error) throw new Error(`${table} draft visibility check failed: ${error.message}`);
   if ((data ?? []).length > 0) throw new Error(`${table} exposes draft rows through public API`);

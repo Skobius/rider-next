@@ -26,6 +26,7 @@ function getPageTitle(pathname: string) {
   if (pathname.startsWith('/route')) return 'Маршрут';
   if (pathname.startsWith('/event')) return 'Событие';
   if (pathname.startsWith('/skill')) return 'Навык';
+  if (pathname.startsWith('/tasks')) return 'Задача';
   return 'Поиск';
 }
 
@@ -42,8 +43,9 @@ export function AppShell() {
   return (
     <div className="motohub-app">
       <aside className="motohub-sidebar" aria-label="Навигация MotoHub">
-        <Link className="motohub-sidebar__brand" to="/search" aria-label="MotoHub">
-          <img src="/assets/brand/motohub-logo-horizontal-transparent.png" alt="MotoHub" />
+        <Link className="motohub-sidebar__brand" to="/search" aria-label="МотоГде">
+          <img className="motohub-logo__image motohub-logo__image--dark" src="/assets/brand/motogde-logo-dark.png" alt="МотоГде" />
+          <img className="motohub-logo__image motohub-logo__image--light" src="/assets/brand/motogde-logo-light.png" alt="МотоГде" />
         </Link>
         <nav className="motohub-sidebar__nav" aria-label={t('nav.label')}>
           {navItems.map((item) => {

@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes, useSearchParams } from 'react-router-dom';
 import { AdminContentPage } from '../pages/Admin/AdminContentPage';
+import { AdminAnalyticsPage } from '../pages/Admin/AdminAnalyticsPage';
 import { AdminUsersPage } from '../pages/Admin/AdminUsersPage';
 import { AuditLogPage } from '../pages/Admin/AuditLogPage';
 import { ModerationPage } from '../pages/Admin/ModerationPage';
@@ -22,6 +23,7 @@ import { MyClaimsPage } from '../pages/Profile/MyClaimsPage';
 import { MyOrganizationsPage } from '../pages/Profile/MyOrganizationsPage';
 import { MySubmissionsPage } from '../pages/Profile/MySubmissionsPage';
 import { RegionPage } from '../pages/RegionPage';
+import { RiderTaskPage } from '../pages/RiderTaskPage';
 import { SearchResultsPage } from '../pages/SearchResultsPage/SearchResultsPage';
 import { CategoryPage } from '../pages/Sections/CategoryPage';
 import { GuidePage } from '../pages/Sections/GuidePage';
@@ -72,6 +74,7 @@ export function App() {
           <Route path="/sections/:slug" element={<SectionsPage />} />
           <Route path="/sections/:sectionSlug/:categorySlug" element={<CategoryPage />} />
           <Route path="/guides/:slug" element={<GuidePage />} />
+          <Route path="/tasks/:slug" element={<RiderTaskPage />} />
           <Route path="/skill/:id" element={<SkillPage />} />
           <Route path="/placeholder/:id" element={<PlaceholderPage />} />
           <Route path="/place/:id" element={<PlaceDetailsPage />} />
@@ -89,6 +92,7 @@ export function App() {
           <Route path="/profile/organizations" element={<MyOrganizationsPage />} />
           <Route path="/moderation" element={<ModerationPage />} />
           <Route path="/admin/content" element={<AdminContentPage />} />
+          <Route path="/admin/analytics" element={<AdminAnalyticsPage />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/audit" element={<AuditLogPage />} />
           <Route path="/install" element={<InstallPage />} />

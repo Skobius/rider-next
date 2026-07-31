@@ -27,6 +27,29 @@ interface ClaimRow {
   created_at: string;
 }
 
+interface VisitReportRow {
+  id: string;
+  place_id: string;
+  region_id: string;
+  user_id: string;
+  status: 'submitted' | 'accepted' | 'rejected';
+  visited_at: string | null;
+  is_open: boolean | null;
+  services_confirmed: string[];
+  comment: string | null;
+  created_at: string;
+}
+
+interface RecheckQueueRow {
+  place_id: string;
+  name: Record<string, string>;
+  region_id: string;
+  category_id: string;
+  last_verification_at: string | null;
+  nearest_expires_at: string | null;
+  recheck_status: string;
+}
+
 const statuses: ReviewStatus[] = ['submitted', 'in_review', 'changes_requested', 'approved', 'rejected', 'cancelled'];
 
 function preview(value: unknown) {
@@ -39,6 +62,8 @@ export function ModerationPage() {
   const { user, loading, isModerator } = useUserRoles();
   const [submissions, setSubmissions] = useState<SubmissionRow[]>([]);
   const [claims, setClaims] = useState<ClaimRow[]>([]);
+  const [visitReports, setVisitReports] = useState<VisitReportRow[]>([]);
+  const [recheckItems, setRecheckItems] = useState<RecheckQueueRow[]>([]);
   const [statusFilter, setStatusFilter] = useState<ReviewStatus | 'all'>('submitted');
   const [messageById, setMessageById] = useState<Record<string, string>>({});
   const [busyId, setBusyId] = useState('');
@@ -62,9 +87,25 @@ export function ModerationPage() {
       claimQuery = claimQuery.eq('status', statusFilter);
     }
 
-    const [{ data: submissionData }, { data: claimData }] = await Promise.all([submissionQuery, claimQuery]);
+    let visitReportQuery = supabase
+      .from('visit_reports')
+      .select('id, place_id, region_id, user_id, status, visited_at, is_open, services_confirmed, comment, created_at')
+      .order('created_at', { ascending: false });
+
+    if (statusFilter === 'submitted' || statusFilter === 'rejected') {
+      visitReportQuery = visitReportQuery.eq('status', statusFilter);
+    }
+
+    const [{ data: submissionData }, { data: claimData }, { data: visitReportData }, { data: recheckData }] = await Promise.all([
+      submissionQuery,
+      claimQuery,
+      visitReportQuery,
+      supabase.from('recheck_queue').select('place_id, name, region_id, category_id, last_verification_at, nearest_expires_at, recheck_status').neq('recheck_status', 'ok').limit(30),
+    ]);
     setSubmissions((submissionData ?? []) as unknown as SubmissionRow[]);
     setClaims((claimData ?? []) as unknown as ClaimRow[]);
+    setVisitReports((visitReportData ?? []) as unknown as VisitReportRow[]);
+    setRecheckItems((recheckData ?? []) as unknown as RecheckQueueRow[]);
   }
 
   useEffect(() => {
@@ -110,6 +151,43 @@ export function ModerationPage() {
     await loadItems();
   }
 
+  async function setVisitReportStatus(item: VisitReportRow, nextStatus: 'accepted' | 'rejected') {
+    if (!supabase) return;
+    setBusyId(item.id);
+    setNotice('');
+    setError('');
+
+    const { error: updateError } = await supabase
+      .from('visit_reports')
+      .update({ status: nextStatus, reviewed_at: new Date().toISOString(), reviewed_by: user?.id ?? null })
+      .eq('id', item.id);
+
+    if (!updateError && nextStatus === 'accepted') {
+      await supabase.from('verification_events').insert({
+        entity_type: 'place',
+        entity_id: item.place_id,
+        place_id: item.place_id,
+        region_id: item.region_id,
+        source: 'user_report',
+        status: 'confirmed',
+        details: {
+          visit_report_id: item.id,
+          is_open: item.is_open,
+          services_confirmed: item.services_confirmed,
+        },
+        created_by: user?.id ?? null,
+      });
+    }
+
+    setBusyId('');
+    if (updateError) {
+      setError('Не удалось обработать пользовательский сигнал.');
+      return;
+    }
+    setNotice(nextStatus === 'accepted' ? 'Сигнал принят, событие проверки создано.' : 'Сигнал отклонён.');
+    await loadItems();
+  }
+
   function messageField(id: string) {
     return (
       <input
@@ -152,6 +230,47 @@ export function ModerationPage() {
 
       {notice ? <p>{notice}</p> : null}
       {error ? <p className="form-error">{error}</p> : null}
+
+      <section className="profile-group">
+        <h2>Сигналы пользователей</h2>
+        <div className="settings-list">
+          {visitReports.map((item) => (
+            <article className="favorite-row admin-review-card" key={item.id}>
+              <span className="settings-list__icon"><CheckCircle2 size={19} aria-hidden="true" /></span>
+              <span className="settings-list__copy">
+                <strong>{item.place_id}</strong>
+                <small>{item.region_id} · {item.status} · {new Date(item.created_at).toLocaleDateString('ru-RU')}</small>
+                <small>{item.is_open === true ? 'Было открыто' : item.is_open === false ? 'Было закрыто' : 'Пользователь был здесь'}</small>
+                {item.services_confirmed.length ? <small>Услуги: {item.services_confirmed.join(', ')}</small> : null}
+                {item.comment ? <pre>{item.comment}</pre> : null}
+                <span className="admin-action-row">
+                  <button type="button" disabled={busyId === item.id} onClick={() => void setVisitReportStatus(item, 'accepted')}><CheckCircle2 size={15} />Принять</button>
+                  <button type="button" disabled={busyId === item.id} onClick={() => void setVisitReportStatus(item, 'rejected')}><XCircle size={15} />Отклонить</button>
+                </span>
+              </span>
+            </article>
+          ))}
+          {!visitReports.length ? <p>Пользовательских сигналов с таким фильтром нет.</p> : null}
+        </div>
+      </section>
+
+      <section className="profile-group">
+        <h2>Очередь перепроверки</h2>
+        <div className="settings-list">
+          {recheckItems.map((item) => (
+            <article className="favorite-row admin-review-card" key={item.place_id}>
+              <span className="settings-list__icon"><ShieldCheck size={19} aria-hidden="true" /></span>
+              <span className="settings-list__copy">
+                <strong>{item.name?.ru ?? item.place_id}</strong>
+                <small>{item.region_id} · {item.category_id} · {item.recheck_status}</small>
+                <small>Последняя проверка: {item.last_verification_at ? new Date(item.last_verification_at).toLocaleDateString('ru-RU') : 'нет данных'}</small>
+                <Link to={`/place/${item.place_id}`}>Открыть карточку</Link>
+              </span>
+            </article>
+          ))}
+          {!recheckItems.length ? <p>Сейчас нет карточек, которым нужна перепроверка.</p> : null}
+        </div>
+      </section>
 
       <section className="profile-group">
         <h2>Предложения</h2>

@@ -1,11 +1,14 @@
-import { AlertTriangle, ArrowLeft, ExternalLink, Heart, MapPin, Phone, ShieldCheck } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, CheckCircle2, ExternalLink, Heart, MapPin, Phone, ShieldCheck } from 'lucide-react';
+import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { appCategories } from '../../data/categories';
 import { getPlacePrimaryBranch, productLabels, verificationLabels } from '../../data/places';
+import { useUserRoles } from '../../shared/auth/useUserRoles';
 import { useBackendContent } from '../../shared/content/backendContent';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
+import { supabase } from '../../shared/supabase/client';
 import { ImageWithFallback } from '../../shared/ui/ImageWithFallback';
 import { showToast } from '../../shared/ui/toastStore';
 
@@ -23,8 +26,11 @@ export function PlaceDetailsPage() {
   const location = useLocation();
   const favorites = useFavorites();
   const { language, t } = useI18n();
+  const { user } = useUserRoles();
   const backendContent = useBackendContent();
   const place = id ? backendContent.places.find((item) => item.id === id) : undefined;
+  const [visitBusy, setVisitBusy] = useState(false);
+  const [visitNotice, setVisitNotice] = useState('');
 
   if (!place && !backendContent.loading) return <Navigate to="/sections/places" replace />;
   if (!place) return <section className="motohub-screen simple-screen"><section className="empty-state"><h2>Загружаем карточку</h2><p>Секунду.</p></section></section>;
@@ -41,12 +47,35 @@ export function PlaceDetailsPage() {
   const canRoute = Boolean(primaryBranch?.mapUrl);
   const isFavorite = favorites.some((favorite) => favorite.id === place.id && favorite.type === 'place');
   const chips = [...(place.products ?? []), ...(place.services?.map((service) => service.ru) ?? []), ...(place.features ?? [])];
+  const structuredServices = place.structuredServices ?? [];
   const relatedGuides = [
     { label: { ru: 'Давление в шинах', en: 'Tire pressure' }, to: '/guides/motorcycle-tire-pressure' },
     { label: { ru: 'Уход за цепью', en: 'Chain care' }, to: '/guides/motorcycle-chain-care' },
     { label: { ru: 'Когда менять масло', en: 'When to change your oil' }, to: '/guides/when-to-change-motorcycle-oil' },
     { label: { ru: 'После зимы', en: 'After winter storage' }, to: '/guides/motorcycle-check-after-winter' },
   ];
+
+  async function submitVisitReport(isOpen: boolean | null) {
+    if (!supabase || !user) return;
+    const currentPlace = place!;
+    setVisitBusy(true);
+    setVisitNotice('');
+    const { error } = await supabase.from('visit_reports').insert({
+      user_id: user.id,
+      place_id: currentPlace.id,
+      region_id: currentPlace.regionId,
+      visited_at: new Date().toISOString(),
+      is_open: isOpen,
+      services_confirmed: structuredServices.map((service) => service.id),
+    });
+    setVisitBusy(false);
+    if (error) {
+      setVisitNotice('Не удалось отправить подтверждение. Возможно, по этому месту уже был сигнал за последние 24 часа.');
+      return;
+    }
+    setVisitNotice('Спасибо. Сигнал отправлен на модерацию и не меняет карточку напрямую.');
+    showToast('Спасибо, сигнал отправлен');
+  }
 
   return (
     <section className="motohub-screen simple-screen detail-screen place-detail-screen">
@@ -122,6 +151,32 @@ export function PlaceDetailsPage() {
         </section>
       ) : null}
 
+      {structuredServices.length ? (
+        <section className="detail-block">
+          <span>Услуги по задаче</span>
+          <div className="structured-service-list">
+            {structuredServices.map((service) => (
+              <div key={service.id}>
+                <strong>{getLocalizedText(service.title, language)}</strong>
+                <small>
+                  {service.availability === 'available' ? 'Подтверждено' : service.availability === 'unavailable' ? 'Не оказывает' : 'Уточняется'}
+                  {' · '}
+                  {service.confirmationStatus === 'unknown' ? 'нужно подтверждение' : service.confirmationStatus}
+                </small>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : (
+        <section className="soft-callout">
+          <CheckCircle2 size={20} aria-hidden="true" />
+          <div>
+            <strong>Подробная информация об услугах уточняется.</strong>
+            <p>Карточка остаётся доступной, но перед визитом лучше уточнить нужную услугу напрямую.</p>
+          </div>
+        </section>
+      )}
+
       {place.contacts.length ? (
         <section className="detail-block">
           <span>{t('places.contacts')}</span>
@@ -175,9 +230,28 @@ export function PlaceDetailsPage() {
         </div>
       </section>
 
+      <section className="soft-callout visit-report-card">
+        <CheckCircle2 size={22} aria-hidden="true" />
+        <div>
+          <strong>Вы были здесь?</strong>
+          <p>Помогите поддерживать карточку актуальной. Ваш ответ попадёт в модерацию и не изменит данные автоматически.</p>
+          {user ? (
+            <span className="admin-action-row">
+              <button type="button" disabled={visitBusy} onClick={() => void submitVisitReport(true)}>Было открыто</button>
+              <button type="button" disabled={visitBusy} onClick={() => void submitVisitReport(false)}>Было закрыто</button>
+              <button type="button" disabled={visitBusy} onClick={() => void submitVisitReport(null)}>Просто был здесь</button>
+            </span>
+          ) : (
+            <Link className="profile-primary-action" to={`/auth?next=${encodeURIComponent(location.pathname)}`}>Войти и подтвердить</Link>
+          )}
+          {visitNotice ? <small>{visitNotice}</small> : null}
+        </div>
+      </section>
+
       <div className="place-bottom-actions">
         <Link to={`/feedback?category=correction&sourceType=place&sourceId=${place.id}&sourceTitle=${encodeURIComponent(title)}`}>{t('places.reportError')}</Link>
         <Link to={`/feedback?category=idea&sourceType=place&sourceId=${place.id}&sourceTitle=${encodeURIComponent(title)}`}>{t('places.suggestCorrection')}</Link>
+        <Link to={`/profile/claims?placeId=${place.id}`}>Заявить права</Link>
       </div>
     </section>
   );

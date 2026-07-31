@@ -1,0 +1,28 @@
+﻿ BACKEND.md                                        |  15 +-
+ public/assets/brand/app-icon-192.png              | Bin 17942 -> 11834 bytes
+ public/assets/brand/app-icon-512.png              | Bin 131327 -> 61345 bytes
+ public/assets/brand/app-icon-64.png               | Bin 2783 -> 2165 bytes
+ public/assets/brand/app-icon.svg                  |  16 +-
+ public/icon.svg                                   |  16 +-
+ scripts/backend-check.mjs                         |  12 +-
+ scripts/export-content-seed.mjs                   | 121 ++++-
+ scripts/staging-seed.mjs                          |   4 +
+ scripts/staging-smoke-check.mjs                   |   6 +-
+ src/app/App.tsx                                   |   4 +
+ src/data/places.ts                                |   8 +
+ src/features/search/searchEngine.ts               |  19 +-
+ src/pages/Admin/AdminContentPage.tsx              |  24 +-
+ src/pages/Admin/ModerationPage.tsx                | 121 ++++-
+ src/pages/Details/PlaceDetailsPage.tsx            |  76 ++-
+ src/pages/HomePage/HomePage.tsx                   |  41 +-
+ src/pages/Profile/MyClaimsPage.tsx                |   8 +-
+ src/pages/Profile/MyOrganizationsPage.tsx         |  91 +++-
+ src/pages/ProfilePage.tsx                         |   8 +-
+ src/pages/SearchResultsPage/SearchResultsPage.tsx |   4 +-
+ src/shared/content/backendContent.ts              |  19 +-
+ src/shared/layout/AppShell.tsx                    |   6 +-
+ src/styles/globals.css                            | 106 +++-
+ supabase/seed.sql                                 | 568 +++++++++++++++++++++-
+ supabase/seed.static.sql                          | 568 +++++++++++++++++++++-
+ supabase/tests/security.sql                       |  66 +++
+ 27 files changed, 1856 insertions(+), 71 deletions(-)

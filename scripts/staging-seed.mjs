@@ -26,6 +26,10 @@ select 'routes=' || count(*) from public.routes;
 select 'events=' || count(*) from public.events;
 select 'guides=' || count(*) from public.guides;
 select 'exercises=' || count(*) from public.exercises;
+select 'rider_tasks=' || count(*) from public.rider_tasks;
+select 'service_definitions=' || count(*) from public.service_definitions;
+select 'task_links=' || count(*) from public.rider_task_links;
+select 'place_services=' || count(*) from public.place_service_definitions;
 `;
 
 const output = runPsql([dbUrl, '-t', '-A', '-v', 'ON_ERROR_STOP=1', '-c', countsSql]);

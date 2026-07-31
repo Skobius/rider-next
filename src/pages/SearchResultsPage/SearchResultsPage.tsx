@@ -15,6 +15,7 @@ import { showToast } from '../../shared/ui/toastStore';
 
 const typeFilters: Array<{ id: SearchEntityType | 'all'; labelKey: string }> = [
   { id: 'all', labelKey: 'search.all' },
+  { id: 'task', labelKey: 'search.tasks' },
   { id: 'place', labelKey: 'search.places' },
   { id: 'route', labelKey: 'search.routes' },
   { id: 'event', labelKey: 'search.events' },
@@ -33,7 +34,7 @@ const categoryLabels: Record<SearchCategory, string> = {
 };
 
 function readType(value: string | null): SearchEntityType | 'all' {
-  return value === 'place' || value === 'route' || value === 'event' || value === 'skill' ? value : 'all';
+  return value === 'place' || value === 'route' || value === 'event' || value === 'skill' || value === 'task' ? value : 'all';
 }
 
 function readCategory(value: string | null): SearchCategory | 'all' {
@@ -56,6 +57,7 @@ function getContextTitle(params: { query: string; type: SearchEntityType | 'all'
   if (params.type === 'route') return params.t('search.contextRoutes');
   if (params.type === 'event') return params.t('search.contextEvents');
   if (params.type === 'skill') return params.t('search.contextSkills');
+  if (params.type === 'task') return params.t('search.tasks');
   return params.t('home.heroTitle');
 }
 

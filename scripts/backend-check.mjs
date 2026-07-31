@@ -31,7 +31,7 @@ async function count(table) {
   return count ?? 0;
 }
 
-const [placesCount, routesCount, eventsCount, guidesCount, exercisesCount, categoriesCount, regionsCount] = await Promise.all([
+const [placesCount, routesCount, eventsCount, guidesCount, exercisesCount, categoriesCount, regionsCount, riderTasksCount, serviceDefinitionsCount, taskLinksCount, placeServicesCount] = await Promise.all([
   count('places'),
   count('routes'),
   count('events'),
@@ -39,6 +39,10 @@ const [placesCount, routesCount, eventsCount, guidesCount, exercisesCount, categ
   count('exercises'),
   count('categories'),
   count('regions'),
+  count('rider_tasks'),
+  count('service_definitions'),
+  count('rider_task_links'),
+  count('place_service_definitions'),
 ]);
 
 if (regionsCount < 1) throw new Error('regions seed is empty');
@@ -48,6 +52,10 @@ if (eventsCount < 2) throw new Error(`events seed is incomplete: ${eventsCount}`
 if (guidesCount < 10) throw new Error(`guides seed is incomplete: ${guidesCount}`);
 if (exercisesCount < 5) throw new Error(`exercises seed is incomplete: ${exercisesCount}`);
 if (categoriesCount < 7) throw new Error(`published categories seed is incomplete: ${categoriesCount}`);
+if (riderTasksCount < 3) throw new Error(`rider tasks seed is incomplete: ${riderTasksCount}`);
+if (serviceDefinitionsCount < 8) throw new Error(`service definitions seed is incomplete: ${serviceDefinitionsCount}`);
+if (taskLinksCount < 10) throw new Error(`task links seed is incomplete: ${taskLinksCount}`);
+if (placeServicesCount < 5) throw new Error(`place services seed is incomplete: ${placeServicesCount}`);
 
 const { error: favoriteError } = await supabase
   .from('favorites')
@@ -58,4 +66,4 @@ if (!favoriteError) throw new Error('anon unexpectedly inserted favorite');
 const { error: bootstrapError } = await supabase.rpc('bootstrap_superadmin', { target_email: 'nobody@example.com' });
 if (!bootstrapError) throw new Error('anon unexpectedly executed bootstrap_superadmin');
 
-console.log(`backend checks passed: ${placesCount} places, ${routesCount} routes, ${eventsCount} events, ${guidesCount} guides, ${exercisesCount} exercises, ${categoriesCount} categories`);
+console.log(`backend checks passed: ${placesCount} places, ${routesCount} routes, ${eventsCount} events, ${guidesCount} guides, ${exercisesCount} exercises, ${categoriesCount} categories, ${riderTasksCount} rider tasks, ${serviceDefinitionsCount} service definitions`);

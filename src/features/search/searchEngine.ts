@@ -1,13 +1,14 @@
 import { events } from '../../data/events';
 import { guides } from '../../data/guides';
 import { places } from '../../data/places';
+import { riderTasks } from '../../data/riderTasks';
 import { routes } from '../../data/routes';
 import { type SearchCategory, type SearchDateFilter, type SearchItem, type SearchItemType } from '../../data/searchContent';
 import { skills } from '../../data/skills';
 import { getLocalizedText, type LocalizedText } from '../../shared/i18n/localizedText';
 import type { GuestLanguage } from '../../shared/storage/guestSettings';
 
-export type SearchEntityType = SearchItemType | 'guide' | 'skill';
+export type SearchEntityType = SearchItemType | 'guide' | 'skill' | 'task';
 
 export interface SearchEntityBase {
   id: string;
@@ -217,8 +218,20 @@ function searchEntities(content?: SearchContentOverride): SearchEntity[] {
     category: 'training',
     sectionId: 'skills',
   }));
+  const taskEntities: SearchEntity[] = riderTasks.filter((task) => task.status === 'published').map((task) => ({
+    id: task.id,
+    type: 'task',
+    title: task.title,
+    description: task.shortDescription,
+    tags: task.tags,
+    searchKeywords: task.searchAliases,
+    targetPath: `/tasks/${task.slug}`,
+    image: task.coverImage,
+    category: task.relatedPlaceCategoryIds.some((id) => id.includes('training')) ? 'training' : 'service',
+    sectionId: 'tasks',
+  }));
 
-  return [...placeEntities, ...guideEntities, ...skillEntities];
+  return [...taskEntities, ...placeEntities, ...guideEntities, ...skillEntities];
 }
 
 function entityText(item: SearchEntity, language: GuestLanguage) {
@@ -291,6 +304,7 @@ function scoreItem(item: SearchEntity, tokens: string[], language: GuestLanguage
   if ('verified' in item && item.verified) score += 3;
   if ('featured' in item && item.featured) score += 2;
   if ('demo' in item && item.demo) score -= 2;
+  if (item.type === 'task') score += 8;
   if (item.type === 'guide') score += 2;
   if (item.type === 'skill') score += 2;
 
@@ -336,6 +350,7 @@ export function searchMotohub(params: SearchParams, content?: SearchContentOverr
 }
 
 export function getSearchEntityLabelKey(type: SearchEntityType) {
+  if (type === 'task') return 'search.tasks';
   if (type === 'guide') return 'search.guides';
   if (type === 'skill') return 'search.skills';
   if (type === 'route') return 'search.routes';

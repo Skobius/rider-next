@@ -1,6 +1,6 @@
 import { ArrowLeft, Send, ShieldCheck } from 'lucide-react';
 import { FormEvent, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { defaultRegionId } from '../../data/regions';
 import { places } from '../../data/places';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
@@ -19,6 +19,7 @@ interface ClaimRow {
 export function MyClaimsPage() {
   const { user, loading, configured } = useAuthSession();
   const { language } = useI18n();
+  const [searchParams] = useSearchParams();
   const [items, setItems] = useState<ClaimRow[]>([]);
   const [busy, setBusy] = useState(false);
   const [sending, setSending] = useState(false);
@@ -41,6 +42,11 @@ export function MyClaimsPage() {
     setItems((data ?? []) as ClaimRow[]);
     setBusy(false);
   }
+
+  useEffect(() => {
+    const placeParam = searchParams.get('placeId');
+    if (placeParam) setPlaceId(placeParam);
+  }, [searchParams]);
 
   useEffect(() => {
     void loadItems();

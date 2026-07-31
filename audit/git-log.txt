@@ -1,0 +1,12 @@
+﻿81b57f2 (HEAD -> main, origin/main) Add Supabase backend and staging setup
+a7ff4a7 Build MotoHub content MVP
+451211e Rework app into Motohub clickable MVP
+b1de45e Use bot content for home sections
+7f75be1 Add nested journey and motorcycle structure
+98f80e9 Apply MG67 visual accent
+88a115a Make home screen a beginner hub
+4845751 Simplify first user journey
+bb158e9 Handle saved profile migration
+d29e479 Refocus MVP around rider missions
+aa4d31f Ignore local git helper files
+f24d9ef Initial Rider Next MVP scaffold

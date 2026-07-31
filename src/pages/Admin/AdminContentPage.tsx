@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useUserRoles } from '../../shared/auth/useUserRoles';
 import { supabase } from '../../shared/supabase/client';
 
-type ContentTable = 'places' | 'routes' | 'events' | 'guides' | 'exercises' | 'categories' | 'regions';
+type ContentTable = 'places' | 'routes' | 'events' | 'guides' | 'exercises' | 'categories' | 'regions' | 'rider_tasks' | 'service_definitions' | 'freshness_policies';
 type ContentStatus = 'draft' | 'published' | 'archived';
 
 interface ContentRow {
@@ -27,6 +27,9 @@ const contentTypes: Array<{ id: ContentTable; title: string; titleColumn: string
   { id: 'exercises', title: 'Упражнения', titleColumn: 'title', descriptionColumn: 'description' },
   { id: 'categories', title: 'Категории', titleColumn: 'title', descriptionColumn: 'description' },
   { id: 'regions', title: 'Регионы', titleColumn: 'title' },
+  { id: 'rider_tasks', title: 'Задачи', titleColumn: 'title', descriptionColumn: 'short_description' },
+  { id: 'service_definitions', title: 'Услуги', titleColumn: 'title', descriptionColumn: 'description' },
+  { id: 'freshness_policies', title: 'Свежесть', titleColumn: 'title' },
 ];
 
 function localized(value: unknown) {
@@ -112,13 +115,18 @@ export function AdminContentPage() {
 
     const nextTitle = { ...selected.rawTitle, ru: title.trim() };
     const nextDescription = { ...selected.rawDescription, ru: description.trim() };
-    const { error: updateError } = await supabase.rpc('update_content_summary', {
-      content_table: table,
-      content_id: selected.id,
-      next_title: nextTitle,
-      next_description: nextDescription,
-      next_status: status,
-    });
+    const updatePayload: Record<string, unknown> = { [meta.titleColumn]: nextTitle, status };
+    if (meta.descriptionColumn) updatePayload[meta.descriptionColumn] = nextDescription;
+
+    const { error: updateError } = ['rider_tasks', 'service_definitions', 'freshness_policies'].includes(table)
+      ? await supabase.from(table).update(updatePayload).eq('id', selected.id)
+      : await supabase.rpc('update_content_summary', {
+        content_table: table,
+        content_id: selected.id,
+        next_title: nextTitle,
+        next_description: nextDescription,
+        next_status: status,
+      });
 
     setBusy(false);
     if (updateError) {

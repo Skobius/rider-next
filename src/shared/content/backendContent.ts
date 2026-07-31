@@ -48,6 +48,22 @@ function asCoordinates(value: unknown): [number, number] | undefined {
   return Number.isFinite(lng) && Number.isFinite(lat) ? [lng, lat] : undefined;
 }
 
+function mapStructuredServices(value: unknown): PlaceItem['structuredServices'] {
+  if (!Array.isArray(value)) return [];
+
+  return value.map((item) => {
+    const row = item as Record<string, unknown>;
+    const definition = row.service_definitions as Record<string, unknown> | null;
+
+    return {
+      id: String(row.service_definition_id ?? definition?.id ?? ''),
+      title: asLocalized(definition?.title, String(row.service_definition_id ?? 'Услуга')),
+      availability: String(row.availability ?? 'unknown') as 'available' | 'unknown' | 'unavailable',
+      confirmationStatus: String(row.confirmation_status ?? 'unknown') as 'unknown' | 'owner_confirmed' | 'moderator_confirmed' | 'user_reported',
+    };
+  }).filter((item) => item.id);
+}
+
 function mapPlace(row: Record<string, unknown>): PlaceItem {
   const categoryId = String(row.category_id ?? 'places-services');
   const verificationStatus = String(row.verification_status ?? 'pending') as VerificationStatus;
@@ -80,6 +96,7 @@ function mapPlace(row: Record<string, unknown>): PlaceItem {
     services: asArray(row.services),
     products: asArray(row.products),
     features: asArray(row.features),
+    structuredServices: mapStructuredServices(row.place_service_definitions),
     tags: asArray<string>(row.tags),
     verified: verificationStatus === 'verified_mg67' || verificationStatus === 'confirmed',
     demo: false,
@@ -150,7 +167,7 @@ export async function loadBackendContent(): Promise<BackendContent> {
   if (!supabase) return fallbackContent;
 
   const [placesResult, routesResult, eventsResult] = await Promise.all([
-    supabase.from('places').select('*').eq('status', 'published'),
+    supabase.from('places').select('*, place_service_definitions(service_definition_id, availability, confirmation_status, service_definitions(id, title))').eq('status', 'published'),
     supabase.from('routes').select('*').eq('status', 'published'),
     supabase.from('events').select('*').eq('status', 'published'),
   ]);

@@ -171,13 +171,29 @@ textarea {
   filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.22));
 }
 
-.motohub-logo img {
+.motohub-logo img,
+.motohub-sidebar__brand img {
   display: block;
   width: 100%;
   height: auto;
   max-width: 100%;
   object-fit: contain;
   object-position: left center;
+}
+
+.motohub-logo .motohub-logo__image--light,
+.motohub-sidebar__brand .motohub-logo__image--light {
+  display: none;
+}
+
+:root[data-theme="light"] .motohub-logo .motohub-logo__image--dark,
+:root[data-theme="light"] .motohub-sidebar__brand .motohub-logo__image--dark {
+  display: none;
+}
+
+:root[data-theme="light"] .motohub-logo .motohub-logo__image--light,
+:root[data-theme="light"] .motohub-sidebar__brand .motohub-logo__image--light {
+  display: block;
 }
 
 .motohub-location {
@@ -403,6 +419,15 @@ textarea {
 
 .quick-card svg {
   color: var(--red);
+}
+
+.quick-card--secondary {
+  min-height: 94px;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.quick-card--secondary svg {
+  color: var(--orange);
 }
 
 .quick-card span {
@@ -1310,10 +1335,12 @@ textarea {
   gap: 10px;
 }
 
-.place-bottom-actions a {
+.place-bottom-actions a,
+.place-bottom-actions button {
   min-height: 44px;
   display: flex;
   align-items: center;
+  gap: 8px;
   justify-content: center;
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -1321,6 +1348,32 @@ textarea {
   color: var(--muted);
   font-size: 13px;
   font-weight: 740;
+}
+
+.structured-service-list {
+  display: grid;
+  gap: 10px;
+}
+
+.structured-service-list div {
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--soft);
+  padding: 12px;
+}
+
+.structured-service-list strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.structured-service-list small,
+.visit-report-card small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .related-category-list a {
@@ -2717,6 +2770,40 @@ textarea {
   padding: var(--space-4);
 }
 
+.task-answer-block p {
+  color: var(--text);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.task-section-heading {
+  display: grid;
+  gap: 12px;
+}
+
+.task-section-heading > span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.task-view-toggle {
+  margin: 0;
+  padding: 0;
+}
+
+.task-view-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.task-map-shortcut {
+  margin-top: 0;
+  border-radius: 18px;
+}
+
 .detail-block h2 {
   color: var(--text);
   font-size: 22px;
@@ -2800,7 +2887,8 @@ textarea {
 :root[data-theme="light"] .region-search,
 :root[data-theme="light"] .contact-list a,
 :root[data-theme="light"] .branch-list div,
-:root[data-theme="light"] .place-bottom-actions a {
+:root[data-theme="light"] .place-bottom-actions a,
+:root[data-theme="light"] .place-bottom-actions button {
   border-color: var(--border);
   background: var(--surface-1);
   box-shadow: 0 12px 28px var(--shadow);
@@ -3479,6 +3567,18 @@ textarea {
     display: block;
     width: 100%;
     height: auto;
+  }
+
+  .motohub-sidebar__brand .motohub-logo__image--light {
+    display: none;
+  }
+
+  :root[data-theme="light"] .motohub-sidebar__brand .motohub-logo__image--dark {
+    display: none;
+  }
+
+  :root[data-theme="light"] .motohub-sidebar__brand .motohub-logo__image--light {
+    display: block;
   }
 
   .motohub-sidebar__nav {

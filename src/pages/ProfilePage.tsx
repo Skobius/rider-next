@@ -1,5 +1,6 @@
 import {
   AppWindow,
+  BarChart3,
   Bell,
   ChevronRight,
   ClipboardList,
@@ -36,6 +37,8 @@ import { supabase } from '../shared/supabase/client';
 interface ProfileMenuItem {
   titleKey: string;
   descriptionKey: string;
+  title?: string;
+  description?: string;
   icon: LucideIcon;
   to: string;
   isRegion?: boolean;
@@ -67,6 +70,7 @@ const groups: ProfileMenuGroup[] = [
     items: [
       { titleKey: 'profile.moderationTitle', descriptionKey: 'profile.moderationDescription', icon: ClipboardList, to: '/moderation', requires: 'moderator' },
       { titleKey: 'profile.adminContentTitle', descriptionKey: 'profile.adminContentDescription', icon: Database, to: '/admin/content', requires: 'admin' },
+      { titleKey: 'profile.adminAnalyticsTitle', descriptionKey: 'profile.adminAnalyticsDescription', title: 'Аналитика', description: 'Качество данных, сигналы и перепроверка', icon: BarChart3, to: '/admin/analytics', requires: 'admin' },
       { titleKey: 'profile.adminUsersTitle', descriptionKey: 'profile.adminUsersDescription', icon: UsersRound, to: '/admin/users', requires: 'superadmin' },
       { titleKey: 'profile.auditTitle', descriptionKey: 'profile.auditDescription', icon: History, to: '/admin/audit', requires: 'superadmin' },
     ],
@@ -168,7 +172,7 @@ export function ProfilePage() {
           <div className="settings-list">
             {group.items.filter((item) => canSee(item.requires)).map((item) => {
               const Icon = item.icon;
-              const description = item.isRegion ? region : t(item.descriptionKey);
+              const description = item.isRegion ? region : item.description ?? t(item.descriptionKey);
 
               return (
                 <Link className="settings-row" key={item.titleKey} to={item.to}>
@@ -176,7 +180,7 @@ export function ProfilePage() {
                     <Icon size={20} aria-hidden="true" />
                   </span>
                   <span className="settings-list__copy">
-                    <strong>{t(item.titleKey)}</strong>
+                    <strong>{item.title ?? t(item.titleKey)}</strong>
                     <small>{description}</small>
                   </span>
                   <ChevronRight size={18} aria-hidden="true" />

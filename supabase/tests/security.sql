@@ -4,6 +4,20 @@ insert into public.regions (id, slug, title, status)
 values ('test-other-region', 'test-other-region', '{"ru":"Test Other Region"}'::jsonb, 'published')
 on conflict (id) do nothing;
 
+delete from public.verification_events
+where created_by in (
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000004'
+);
+delete from public.visit_reports
+where user_id in (
+  '00000000-0000-4000-8000-000000000001',
+  '00000000-0000-4000-8000-000000000002',
+  '00000000-0000-4000-8000-000000000007'
+);
+delete from public.owner_confirmations
+where confirmed_by = '00000000-0000-4000-8000-000000000003';
+
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
   ('00000000-0000-4000-8000-000000000001', 'authenticated', 'authenticated', 'security-user@example.test', '', now(), '{"provider":"email","providers":["email"]}'::jsonb, '{}'::jsonb, now(), now()),
@@ -109,6 +123,8 @@ declare
   forbidden_succeeded boolean;
 begin
   if (select count(*) from public.places where status = 'published') < 1 then raise exception 'guest cannot read published places'; end if;
+  if (select count(*) from public.rider_tasks where status = 'published') < 3 then raise exception 'guest cannot read published rider tasks'; end if;
+  if (select count(*) from public.service_definitions where status = 'published') < 8 then raise exception 'guest cannot read published service definitions'; end if;
   if exists (select 1 from public.places where status = 'draft') then raise exception 'guest can read draft places'; end if;
   begin
     insert into public.content_submissions (entity_type, submission_type, region_id, author_id)
@@ -118,6 +134,14 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'guest created submission'; end if;
+  begin
+    insert into public.visit_reports (user_id, place_id, region_id)
+    values ('00000000-0000-4000-8000-000000000001', 'rolling-moto-shop-smolensk', 'smolensk-oblast');
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'guest created visit report'; end if;
   begin
     perform 1 from public.audit_log limit 1;
     forbidden_succeeded := true;
@@ -139,6 +163,24 @@ begin
   insert into public.favorites (user_id, entity_type, entity_id)
   values ('00000000-0000-4000-8000-000000000001', 'place', 'rolling-moto-shop-smolensk')
   on conflict do nothing;
+  insert into public.visit_reports (user_id, place_id, region_id, is_open, services_confirmed)
+  values ('00000000-0000-4000-8000-000000000001', 'rolling-moto-shop-smolensk', 'smolensk-oblast', true, array['service']);
+  begin
+    insert into public.visit_reports (user_id, place_id, region_id, is_open)
+    values ('00000000-0000-4000-8000-000000000001', 'rolling-moto-shop-smolensk', 'smolensk-oblast', true);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'user bypassed same place visit report limit'; end if;
+  begin
+    insert into public.visit_reports (user_id, place_id, region_id, is_open)
+    values ('00000000-0000-4000-8000-000000000002', 'rolling-moto-shop-smolensk', 'smolensk-oblast', true);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'user created visit report for another account'; end if;
   if exists (select 1 from public.content_submissions where author_id = '00000000-0000-4000-8000-000000000002') then
     raise exception 'user can read another user submission';
   end if;
@@ -178,6 +220,16 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'owner updated published place directly'; end if;
+  insert into public.owner_confirmations (organization_id, place_id, confirmed_by, region_id, confirmation_data)
+  values ('10000000-0000-4000-8000-000000000001', 'rolling-moto-shop-smolensk', '00000000-0000-4000-8000-000000000003', 'smolensk-oblast', '{"unchanged":true}'::jsonb);
+  begin
+    insert into public.owner_confirmations (organization_id, place_id, confirmed_by, region_id, confirmation_data)
+    values ('10000000-0000-4000-8000-000000000002', 'rolling-moto-shop-smolensk', '00000000-0000-4000-8000-000000000003', 'smolensk-oblast', '{"unchanged":true}'::jsonb);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'owner confirmed organization without membership'; end if;
 end $$;
 reset session authorization;
 
@@ -200,6 +252,12 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'moderator assigned role'; end if;
+  update public.visit_reports
+  set status = 'accepted', reviewed_by = '00000000-0000-4000-8000-000000000004', reviewed_at = now()
+  where place_id = 'rolling-moto-shop-smolensk' and status = 'submitted';
+  if not found then raise exception 'moderator cannot update own-region visit report'; end if;
+  insert into public.verification_events (entity_type, entity_id, place_id, region_id, source, status, created_by)
+  values ('place', 'rolling-moto-shop-smolensk', 'rolling-moto-shop-smolensk', 'smolensk-oblast', 'user_report', 'confirmed', '00000000-0000-4000-8000-000000000004');
 end $$;
 reset session authorization;
 
@@ -282,6 +340,14 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'blocked user created submission'; end if;
+  begin
+    insert into public.visit_reports (user_id, place_id, region_id)
+    values ('00000000-0000-4000-8000-000000000007', 'rolling-moto-shop-smolensk', 'smolensk-oblast');
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'blocked user created visit report'; end if;
   begin
     perform public.update_content_summary('places', 'rolling-moto-shop-smolensk', '{"ru":"Bad"}'::jsonb, '{"ru":"Bad"}'::jsonb, 'published');
     forbidden_succeeded := true;
