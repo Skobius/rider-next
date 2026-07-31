@@ -168,7 +168,7 @@ textarea {
   align-items: center;
   width: min(260px, 66vw);
   min-height: 52px;
-  filter: drop-shadow(0 5px 12px rgba(0, 0, 0, 0.22));
+  filter: none;
 }
 
 .motohub-logo img,
@@ -3968,4 +3968,797 @@ textarea {
   .map-stage {
     min-height: calc(100vh - var(--desktop-header-height) - 164px);
   }
+}
+
+/* Public UI simplification */
+.motohub-hero {
+  min-height: 218px;
+  gap: var(--space-3);
+}
+
+.motohub-logo {
+  width: min(220px, 58vw);
+  min-height: 40px;
+}
+
+.motohub-sidebar__brand {
+  overflow: hidden;
+}
+
+.motohub-hero-copy {
+  padding-top: 2px;
+}
+
+.motohub-hero-copy h1 {
+  max-width: 9ch;
+  font-size: clamp(28px, 7.1vw, 34px);
+}
+
+.motohub-hero-copy p {
+  max-width: 30ch;
+  font-size: 14px;
+}
+
+.motohub-search {
+  min-height: 52px;
+  border-radius: 18px;
+}
+
+.quick-find-grid {
+  grid-auto-columns: 118px;
+  padding-right: 48px;
+}
+
+.quick-find-card {
+  width: 118px;
+  min-height: 88px;
+  gap: 8px;
+  border-radius: 18px;
+  padding: 13px;
+}
+
+.quick-find-card span {
+  font-size: 13px;
+  -webkit-line-clamp: 2;
+}
+
+.map-shortcut-card,
+.useful-guide-card {
+  display: grid;
+  align-items: center;
+  gap: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.14);
+}
+
+.map-shortcut-card {
+  grid-template-columns: 42px minmax(0, 1fr) 18px;
+  min-height: 72px;
+  padding: 14px;
+}
+
+.map-shortcut-card span {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: rgba(255, 100, 24, 0.13);
+  color: var(--orange);
+}
+
+.map-shortcut-card strong,
+.useful-guide-card strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+}
+
+.useful-guide-list {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.useful-guide-card {
+  grid-template-columns: minmax(0, 1fr) 18px;
+  min-height: 82px;
+  padding: 13px 14px;
+}
+
+.useful-guide-card small {
+  grid-column: 1 / -1;
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.35;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.category-hero-card {
+  min-height: 154px;
+  border-radius: 22px;
+}
+
+.category-hero-card .section-hero-card__content {
+  gap: 8px;
+  padding: 18px;
+}
+
+.category-hero-card h1 {
+  font-size: clamp(25px, 7vw, 31px);
+}
+
+.category-hero-card p {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 14px;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.category-hero-card .detail-badge-row {
+  margin-top: 2px;
+}
+
+.place-list-card {
+  min-height: 156px;
+  align-items: stretch;
+}
+
+.place-list-card__media {
+  min-height: 136px;
+}
+
+.place-list-card__body {
+  align-content: start;
+  gap: 7px;
+}
+
+.place-list-card__body strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.place-list-card__body small {
+  -webkit-line-clamp: 1;
+}
+
+.place-list-card__body em {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.place-status-badge.status-good {
+  background: rgba(75, 207, 115, 0.12);
+  color: var(--green);
+}
+
+.place-status-badge.status-warn {
+  background: rgba(255, 183, 74, 0.14);
+  color: var(--amber);
+}
+
+.place-detail-layout,
+.place-detail-main {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.place-hero-card {
+  min-height: 216px;
+  border-radius: 24px;
+}
+
+.place-summary-card,
+.place-status-row,
+.actuality-card,
+.detail-disclosure {
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--panel);
+  color: var(--text);
+  padding: var(--space-4);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.14);
+}
+
+.place-summary-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 38px;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.place-summary-card h1,
+.place-summary-card p {
+  margin: 0;
+}
+
+.place-summary-card h1 {
+  color: var(--text);
+  font-size: clamp(27px, 7.8vw, 38px);
+  line-height: 1.04;
+}
+
+.place-summary-card p {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.42;
+}
+
+.place-category-label {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: rgba(255, 100, 24, 0.13);
+  color: var(--orange);
+  padding: 6px 9px;
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.place-status-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.place-status-row small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.actuality-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-weight: 790;
+}
+
+.actuality-pill--good {
+  background: rgba(75, 207, 115, 0.13);
+  color: var(--green);
+}
+
+.actuality-pill--warn {
+  background: rgba(255, 183, 74, 0.14);
+  color: var(--amber);
+}
+
+.place-info-compact {
+  grid-template-columns: 1fr;
+}
+
+.place-action-panel {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.place-action-panel a,
+.place-action-panel button {
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: var(--panel);
+  color: var(--text);
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 790;
+}
+
+.place-action-panel a:first-child {
+  border-color: rgba(255, 100, 24, 0.42);
+  background: var(--orange);
+  color: #fff;
+}
+
+.inline-more-button,
+.detail-disclosure > button {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: rgba(255, 100, 24, 0.12);
+  color: var(--orange);
+  padding: 8px 11px;
+  font-size: 13px;
+  font-weight: 780;
+}
+
+.detail-disclosure {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.detail-disclosure > button {
+  width: 100%;
+  justify-content: space-between;
+  background: transparent;
+  color: var(--text);
+  padding: 0;
+}
+
+.actuality-card {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr);
+  gap: var(--space-3);
+}
+
+.actuality-dot {
+  width: 10px;
+  height: 10px;
+  margin-top: 5px;
+  border-radius: 999px;
+}
+
+.actuality-dot--good {
+  background: var(--green);
+}
+
+.actuality-dot--warn {
+  background: var(--amber);
+}
+
+.actuality-card strong,
+.actuality-card p {
+  margin: 0;
+}
+
+.actuality-card strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.actuality-card p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.42;
+}
+
+@media (max-width: 374px) {
+  .motohub-logo {
+    width: 174px;
+  }
+
+  .round-action {
+    width: 38px;
+    height: 38px;
+  }
+
+  .place-action-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 768px) {
+  .catalog-card-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .related-category-list {
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .motohub-hero {
+    min-height: 250px;
+    border-radius: 0 0 28px 28px;
+  }
+
+  .motohub-hero-copy h1 {
+    max-width: none;
+    font-size: clamp(38px, 3.2vw, 52px);
+  }
+
+  .motohub-search {
+    max-width: 680px;
+  }
+
+  .quick-find-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .quick-find-card {
+    width: auto;
+    min-height: 92px;
+  }
+
+  .useful-guide-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .category-hero-card {
+    min-height: 176px;
+  }
+
+  .catalog-card-list {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .place-list-card {
+    grid-template-columns: 104px minmax(0, 1fr);
+  }
+
+  .place-list-card__media {
+    width: 104px;
+    min-height: 138px;
+  }
+
+  .place-detail-screen {
+    max-width: 1120px;
+  }
+
+  .place-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .place-hero-card {
+    min-height: 300px;
+  }
+
+  .place-info-compact {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Home-only review iteration */
+.home-hero {
+  min-height: 292px;
+  gap: 13px;
+  padding-bottom: 18px;
+}
+
+.home-hero .motohub-logo {
+  width: min(164px, 47vw);
+  min-height: 38px;
+}
+
+.home-hero .motohub-logo .motohub-logo__image--dark,
+:root[data-theme="light"] .home-hero .motohub-logo .motohub-logo__image--dark {
+  display: block;
+}
+
+.home-hero .motohub-logo .motohub-logo__image--light,
+:root[data-theme="light"] .home-hero .motohub-logo .motohub-logo__image--light {
+  display: none;
+}
+
+.home-hero .motohub-location {
+  min-height: 24px;
+}
+
+.home-hero .motohub-hero-copy {
+  padding-top: 2px;
+}
+
+.home-hero .motohub-hero-copy h1 {
+  max-width: none;
+  font-size: clamp(30px, 8vw, 38px);
+  line-height: 1.04;
+}
+
+.home-hero .motohub-hero-copy p {
+  max-width: 25ch;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: clamp(14px, 3.8vw, 16px);
+}
+
+.home-hero .motohub-search {
+  min-height: 54px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  padding: 8px 16px;
+}
+
+.home-content {
+  gap: 18px;
+  padding-top: 12px;
+}
+
+.home-quick-section {
+  margin-top: -6px;
+}
+
+.quick-find-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  overflow: visible;
+  padding: 0;
+}
+
+.quick-find-card {
+  width: auto;
+  min-width: 0;
+  min-height: 68px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  place-items: center start;
+  gap: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.025)),
+    var(--panel);
+  color: var(--text);
+  padding: 10px 12px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.1);
+}
+
+.quick-find-card svg {
+  width: 20px;
+  height: 20px;
+  color: var(--orange);
+}
+
+.quick-find-card span {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.16;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sections-home-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.section-home-card {
+  position: relative;
+  min-width: 0;
+  min-height: 114px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-content: start;
+  gap: 8px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.08), transparent 34%),
+    var(--panel);
+  color: var(--text);
+  padding: 13px;
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.14);
+}
+
+.section-home-card > span:first-child {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background: rgba(255, 100, 24, 0.12);
+  color: var(--orange);
+}
+
+.section-home-card > svg {
+  align-self: start;
+  justify-self: end;
+  color: var(--muted);
+}
+
+.section-home-card strong,
+.section-home-card small {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.section-home-card strong {
+  color: var(--text);
+  font-size: 15px;
+  line-height: 1.16;
+}
+
+.section-home-card small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.section-home-card--wide {
+  min-height: 92px;
+  grid-column: 1 / -1;
+  grid-template-columns: 42px minmax(0, 1fr) 18px;
+  align-items: center;
+  align-content: center;
+}
+
+.section-home-card--wide > span:first-child {
+  grid-row: 1 / 3;
+}
+
+.section-home-card--wide strong,
+.section-home-card--wide small {
+  grid-column: 2;
+}
+
+.section-home-card--wide > svg {
+  grid-column: 3;
+  grid-row: 1 / 3;
+  align-self: center;
+}
+
+.section-home-card--amber > span:first-child {
+  background: rgba(255, 183, 74, 0.14);
+  color: var(--amber);
+}
+
+.section-home-card--green > span:first-child {
+  background: rgba(75, 207, 115, 0.13);
+  color: var(--green);
+}
+
+.section-home-card--blue > span:first-child {
+  background: rgba(84, 136, 255, 0.14);
+  color: #6fa3ff;
+}
+
+.section-home-card--red > span:first-child {
+  background: rgba(255, 100, 24, 0.14);
+  color: var(--orange);
+}
+
+:root[data-theme="light"] .quick-find-card,
+:root[data-theme="light"] .section-home-card {
+  border-color: rgba(10, 13, 15, 0.08);
+  background:
+    radial-gradient(circle at 20% 0%, rgba(255, 100, 24, 0.09), transparent 36%),
+    #ffffff;
+}
+
+@media (max-width: 374px) {
+  .home-hero {
+    min-height: 282px;
+    padding-bottom: 16px;
+  }
+
+  .home-hero .motohub-logo {
+    width: min(158px, 48vw);
+  }
+
+  .home-hero .motohub-hero-copy h1 {
+    font-size: clamp(28px, 7.8vw, 34px);
+  }
+
+  .quick-find-card {
+    min-height: 66px;
+  }
+
+  .quick-find-card span {
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 768px) {
+  .quick-find-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-hero {
+    min-height: 286px;
+    padding: 30px var(--page-padding) 26px;
+  }
+
+  .home-hero .motohub-hero-copy h1 {
+    font-size: clamp(42px, 4vw, 58px);
+  }
+
+  .home-hero .motohub-search {
+    max-width: 680px;
+  }
+
+  .quick-find-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .quick-find-card {
+    min-height: 78px;
+  }
+
+  .sections-home-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .section-home-card--wide {
+    grid-column: span 2;
+  }
+}
+
+.place-secondary-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.place-secondary-links a {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--text);
+  padding: 0 13px;
+  font-size: 13px;
+  font-weight: 760;
+}
+
+.place-about-block {
+  padding-block: 15px;
+}
+
+.place-about-block .place-description {
+  gap: 8px;
+}
+
+.place-about-block .place-description p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.visit-report-card {
+  align-items: start;
+}
+
+.visit-report-card p {
+  margin-bottom: 10px;
+}
+
+.visit-action-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.visit-action-row button {
+  min-height: 40px;
+  border-radius: 14px;
+  font-size: 13px;
+}
+
+.visit-action-row button:first-child {
+  border-color: rgba(255, 100, 24, 0.42);
+  background: var(--orange);
+  color: #fff;
 }

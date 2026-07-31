@@ -70,7 +70,7 @@ export function AppShell() {
       <div className="motohub-workspace">
         <header className="motohub-desktop-header">
           <div>
-            <p>MotoHub</p>
+            <p>МотоГде</p>
             <h1>{pageTitle}</h1>
           </div>
           <div className="motohub-desktop-header__actions">

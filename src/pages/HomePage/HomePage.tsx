@@ -1,27 +1,81 @@
-import { Bell, ChevronRight, Flame, MapPin, Mic, Search, UserRound } from 'lucide-react';
+import {
+  Bell,
+  BookOpen,
+  ChevronRight,
+  Gauge,
+  GraduationCap,
+  Map,
+  MapPin,
+  MapPinned,
+  Search,
+  ShieldCheck,
+  ShoppingBag,
+  UserRound,
+  UsersRound,
+  Wrench,
+} from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getRegionLabel } from '../../data/regions';
-import { getRecommendations, popularQueries } from '../../data/motohubHome';
-import { getFeaturedRiderTasks } from '../../data/riderTasks';
-import { appSections } from '../../data/sections';
 import { searchMotohub } from '../../features/search/searchEngine';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
-import { toggleFavorite, useFavorites } from '../../shared/storage/favoritesStore';
 import { useGuestSettings } from '../../shared/storage/guestSettings';
-import { getContentIcon } from '../../shared/ui/contentIcons';
-import { showToast } from '../../shared/ui/toastStore';
+
+const quickFindItems = [
+  { title: 'Шиномонтаж', category: 'places-tire-services', query: 'поменять резину', icon: Gauge },
+  { title: 'Мотосервисы', category: 'places-services', query: 'мотосервис', icon: Wrench },
+  { title: 'Магазины', category: 'moto-shops', query: 'купить экипировку', icon: ShoppingBag },
+  { title: 'Страховка', category: 'places-insurance', query: 'страховка', icon: ShieldCheck },
+  { title: 'Обучение', category: 'places-schools-instructors', query: 'обучение', icon: GraduationCap },
+  { title: 'Все места', type: 'place', query: '', icon: MapPin },
+];
+
+const homeSections = [
+  {
+    title: 'Места',
+    description: 'Сервисы, магазины, шиномонтажи и полезные точки рядом.',
+    to: '/sections/places',
+    icon: MapPin,
+    tone: 'orange',
+  },
+  {
+    title: 'Полезно знать',
+    description: 'Короткие ответы про обслуживание, экипировку и первый сезон.',
+    to: '/sections/guides',
+    icon: BookOpen,
+    tone: 'amber',
+  },
+  {
+    title: 'Маршруты и места',
+    description: 'Идеи поездок, направления и спокойные маршруты.',
+    to: '/sections/routes',
+    icon: MapPinned,
+    tone: 'green',
+  },
+  {
+    title: 'События и сообщество',
+    description: 'Встречи, тренировки, выезды и мото-жизнь рядом.',
+    to: '/sections/community',
+    icon: UsersRound,
+    tone: 'blue',
+  },
+  {
+    title: 'Навыки и безопасность',
+    description: 'Практика, городская езда и уверенное развитие без лишней теории.',
+    to: '/sections/skills',
+    icon: ShieldCheck,
+    tone: 'red',
+    wide: true,
+  },
+];
 
 export function HomePage() {
   const settings = useGuestSettings();
-  const favorites = useFavorites();
   const { language, t } = useI18n();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const savedRegion = getRegionLabel(settings.regionId);
-  const recommendations = useMemo(() => getRecommendations(settings.regionId), [settings.regionId]);
-  const featuredTasks = useMemo(() => getFeaturedRiderTasks(), []);
   const suggestions = useMemo(() => {
     if (query.trim().length < 2) return [];
     return searchMotohub({ query, regionId: settings.regionId, language }).slice(0, 4);
@@ -44,7 +98,7 @@ export function HomePage() {
 
   return (
     <section className="motohub-screen">
-      <header className="motohub-hero">
+      <header className="motohub-hero home-hero">
         <div className="motohub-topbar">
           <div className="motohub-brand-wrap">
             <Link className="motohub-logo" to="/search" aria-label="МотоГде">
@@ -70,15 +124,12 @@ export function HomePage() {
 
         <div className="motohub-hero-copy">
           <h1>Что вам нужно?</h1>
-          <p>Опишите задачу или выберите готовый сценарий</p>
+          <p>Найдем проверенное мотоместо в Смоленске.</p>
         </div>
 
         <form className="motohub-search" onSubmit={submitSearch}>
           <Search size={22} aria-hidden="true" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: поменять резину, найти сервис, подготовиться к поездке..." />
-          <button type="button" aria-label={t('home.voiceSearch')} title={t('home.voiceSearch')} disabled>
-            <Mic size={19} aria-hidden="true" />
-          </button>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: поменять резину" />
         </form>
         {suggestions.length ? (
           <div className="home-search-suggestions">
@@ -100,120 +151,40 @@ export function HomePage() {
         ) : null}
       </header>
 
-      <main className="motohub-content">
-        <section className="motohub-section">
-          <h2>Частые задачи</h2>
-          <div className="quick-scroll" aria-label="Частые задачи мотоциклиста">
-            {featuredTasks.map((task) => {
-              const Icon = getContentIcon(task.icon);
-              const title = getLocalizedText(task.shortTitle, language);
-              return (
-                <button className="quick-card" key={task.id} type="button" onClick={() => navigate(`/tasks/${task.slug}`)}>
-                  <Icon size={27} strokeWidth={2} aria-hidden="true" />
-                  <span>{title}</span>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="mg67-card">
-          <div className="mg67-card__icon">
-            <Flame size={17} aria-hidden="true" />
-          </div>
-          <div className="mg67-card__copy">
-            <p>{t('home.mg67Label')}</p>
-            <h2>{t('home.mg67Title')}</h2>
-            <span>{t('home.mg67Text')}</span>
-          </div>
-          <Link to="/guides/motorcycle-tire-pressure">
-            {t('home.details')}
-            <ChevronRight size={18} aria-hidden="true" />
-          </Link>
-        </section>
-
-        <section className="motohub-section">
-          <h2>Разобраться самому</h2>
-          <div className="quick-scroll" aria-label={t('home.popularLabel')}>
-            {popularQueries.slice(0, 4).map((item) => {
+      <main className="motohub-content home-content">
+        <section className="motohub-section home-quick-section">
+          <h2>Быстро найти</h2>
+          <div className="quick-find-grid" aria-label="Быстрые категории поиска">
+            {quickFindItems.map((item) => {
               const Icon = item.icon;
-              const title = getLocalizedText(item.title, language);
               return (
-                <button className="quick-card quick-card--secondary" key={title} type="button" onClick={() => openSearch({ q: item.query, type: item.type, category: item.category, date: item.date })}>
-                  <Icon size={24} strokeWidth={2} aria-hidden="true" />
-                  <span>{title}</span>
+                <button className="quick-find-card" key={item.title} type="button" onClick={() => openSearch({ q: item.query, type: item.type, category: item.category })}>
+                  <Icon size={22} strokeWidth={2.1} aria-hidden="true" />
+                  <span>{item.title}</span>
                 </button>
               );
             })}
           </div>
         </section>
 
+        <Link className="map-shortcut-card" to="/map">
+          <span><Map size={20} aria-hidden="true" /></span>
+          <strong>Показать места на карте</strong>
+          <ChevronRight size={18} aria-hidden="true" />
+        </Link>
+
         <section className="motohub-section">
-          <div className="section-heading-row">
-            <h2>{t('home.usefulNearby')}</h2>
-            <Link to="/sections">
-              {t('sections.allSections')}
-              <ChevronRight size={18} aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="places-grid sections-home-grid">
-            {appSections.map((item, index) => {
-              const Icon = getContentIcon(item.icon);
-              const title = getLocalizedText(item.title, language);
+          <h2>Всё для мотоциклиста</h2>
+          <div className="sections-home-grid">
+            {homeSections.map((section) => {
+              const Icon = section.icon;
               return (
-                <Link className={`place-card section-home-card ${index === 4 ? 'section-home-card--wide' : ''}`} key={item.id} to={`/sections/${item.slug}`}>
-                  <span>
-                    <Icon size={23} strokeWidth={2} aria-hidden="true" />
-                  </span>
-                  <strong>{title}</strong>
-                  <small>{getLocalizedText(item.description, language)}</small>
+                <Link className={`section-home-card section-home-card--${section.tone}${section.wide ? ' section-home-card--wide' : ''}`} to={section.to} key={section.title}>
+                  <span><Icon size={22} strokeWidth={2.1} aria-hidden="true" /></span>
+                  <strong>{section.title}</strong>
+                  <small>{section.description}</small>
+                  <ChevronRight size={17} aria-hidden="true" />
                 </Link>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="motohub-section">
-          <div className="section-heading-row">
-            <h2>{t('home.recommendedToday')}</h2>
-            <button type="button" onClick={() => openSearch({ featured: true })}>
-              {t('common.all')}
-              <ChevronRight size={18} aria-hidden="true" />
-            </button>
-          </div>
-
-          <div className="recommend-scroll" aria-label={t('home.recommendationsLabel')}>
-            {recommendations.map((item) => {
-              const Icon = item.icon;
-              const title = getLocalizedText(item.title, language);
-              const isFavorite = item.favoriteType ? favorites.some((favorite) => favorite.id === item.id && favorite.type === item.favoriteType) : false;
-              return (
-                <article className="recommend-card" key={title} style={{ backgroundImage: `url(${item.image})` }}>
-                  <div className="recommend-card__top">
-                    <span>{getLocalizedText(item.label, language)}</span>
-                    <button
-                      className={isFavorite ? 'is-active' : ''}
-                      type="button"
-                      disabled={!item.favoriteType}
-                      aria-label={isFavorite ? t('favorites.removeLabel') : t('home.favoriteAdd')}
-                      onClick={() => {
-                        if (!item.favoriteType) return;
-                        const added = toggleFavorite({ id: item.id, type: item.favoriteType, title, description: getLocalizedText(item.details, language) });
-                        showToast(added ? t('favorites.addedToast') : t('favorites.removedToast'));
-                      }}
-                    >
-                      <Icon size={18} aria-hidden="true" />
-                    </button>
-                  </div>
-                  <Link className="recommend-card__copy" to={item.path}>
-                    <h3>{title}</h3>
-                    <p>{getLocalizedText(item.details, language)}</p>
-                    <small>
-                      <MapPin size={14} aria-hidden="true" />
-                      {getLocalizedText(item.note, language)}
-                    </small>
-                  </Link>
-                </article>
               );
             })}
           </div>
