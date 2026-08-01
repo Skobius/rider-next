@@ -99,14 +99,16 @@ In Supabase Dashboard:
 
 ```text
 http://localhost:5173
-http://localhost:5173/auth/callback
+http://localhost:5173/auth
 http://<LOCAL_IP>:5173
-http://<LOCAL_IP>:5173/auth/callback
-https://staging.<domain>
-https://staging.<domain>/auth/callback
+http://<LOCAL_IP>:5173/auth
+https://<STAGING_HOST>
+https://<STAGING_HOST>/auth
 ```
 
 Built-in Supabase email is acceptable only for closed staging. Public launch needs SMTP, reviewed templates and anti-abuse limits.
+
+The app uses `/auth` for email confirmation and password recovery redirects. Password reset links should return to `/auth?type=recovery&next=/profile`, where the user can set a new password.
 
 ## 8. First Superadmin
 

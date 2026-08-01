@@ -1,10 +1,10 @@
 import { ArrowLeft, CheckCircle2, LockKeyhole, LogOut, Mail } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from '../shared/supabase/client';
 import { useAuthSession } from '../shared/auth/useAuthSession';
 
-type AuthMode = 'login' | 'signup' | 'reset';
+type AuthMode = 'login' | 'signup' | 'reset' | 'update';
 
 function getSafeError(errorMessage?: string) {
   if (!errorMessage) return 'Не удалось выполнить действие. Попробуйте ещё раз.';
@@ -30,6 +30,19 @@ export function AuthPlaceholderPage() {
     return next && next.startsWith('/') ? next : '/profile';
   }, [params]);
 
+  useEffect(() => {
+    if (!supabase) return;
+    if (params.get('type') === 'recovery' || window.location.hash.includes('type=recovery')) {
+      setMode('update');
+    }
+
+    const { data } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') setMode('update');
+    });
+
+    return () => data.subscription.unsubscribe();
+  }, [params]);
+
   async function submit(event: FormEvent) {
     event.preventDefault();
     setStatus('');
@@ -45,6 +58,14 @@ export function AuthPlaceholderPage() {
       if (mode === 'login') {
         const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
+        navigate(redirectTo, { replace: true });
+        return;
+      }
+
+      if (mode === 'update') {
+        const { error: updateError } = await supabase.auth.updateUser({ password });
+        if (updateError) throw updateError;
+        setStatus('Пароль обновлён. Теперь можно продолжить работу.');
         navigate(redirectTo, { replace: true });
         return;
       }
@@ -69,7 +90,7 @@ export function AuthPlaceholderPage() {
       }
 
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth?next=${encodeURIComponent('/profile')}`,
+        redirectTo: `${window.location.origin}/auth?type=recovery&next=${encodeURIComponent('/profile')}`,
       });
       if (resetError) throw resetError;
       setStatus('Если email зарегистрирован, на него придёт письмо для восстановления.');
@@ -117,7 +138,7 @@ export function AuthPlaceholderPage() {
     );
   }
 
-  if (user) {
+  if (user && mode !== 'update') {
     return (
       <section className="motohub-screen simple-screen">
         <Link className="back-link" to="/profile"><ArrowLeft size={18} aria-hidden="true" />Назад в профиль</Link>
@@ -144,7 +165,7 @@ export function AuthPlaceholderPage() {
       <Link className="back-link" to="/profile"><ArrowLeft size={18} aria-hidden="true" />Назад в профиль</Link>
       <header className="simple-screen__header">
         <p>Аккаунт</p>
-        <h1>{mode === 'signup' ? 'Регистрация' : mode === 'reset' ? 'Восстановление пароля' : 'Вход'}</h1>
+        <h1>{mode === 'signup' ? 'Регистрация' : mode === 'reset' ? 'Восстановление пароля' : mode === 'update' ? 'Новый пароль' : 'Вход'}</h1>
         <span>Supabase Auth, без хранения паролей в MotoHub.</span>
       </header>
 
@@ -161,13 +182,15 @@ export function AuthPlaceholderPage() {
             <input className="auth-input" value={displayName} onChange={(event) => setDisplayName(event.target.value)} placeholder="Как к вам обращаться" />
           </label>
         ) : null}
-        <label>
-          Email
-          <input className="auth-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="email@example.com" />
-        </label>
+        {mode !== 'update' ? (
+          <label>
+            Email
+            <input className="auth-input" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required placeholder="email@example.com" />
+          </label>
+        ) : null}
         {mode !== 'reset' ? (
           <label>
-            Пароль
+            {mode === 'update' ? 'Новый пароль' : 'Пароль'}
             <input className="auth-input" type="password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} placeholder="Минимум 8 символов" />
           </label>
         ) : null}
@@ -181,7 +204,7 @@ export function AuthPlaceholderPage() {
         ) : null}
         <button className="profile-primary-action" type="submit" disabled={busy}>
           <Mail size={17} aria-hidden="true" />
-          {busy ? 'Отправляем...' : mode === 'signup' ? 'Создать аккаунт' : mode === 'reset' ? 'Отправить письмо' : 'Войти'}
+          {busy ? 'Отправляем...' : mode === 'signup' ? 'Создать аккаунт' : mode === 'reset' ? 'Отправить письмо' : mode === 'update' ? 'Обновить пароль' : 'Войти'}
         </button>
         {status ? <p>{status}</p> : null}
         {error ? <p className="form-error">{error}</p> : null}
