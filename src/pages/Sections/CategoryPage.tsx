@@ -8,6 +8,7 @@ import { routes } from '../../data/routes';
 import { searchContent } from '../../data/searchContent';
 import { findSectionBySlug, isRegionalSection } from '../../data/sections';
 import { skills } from '../../data/skills';
+import { useBackendContent } from '../../shared/content/backendContent';
 import { getLocalizedText, type LocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { useGuestSettings } from '../../shared/storage/guestSettings';
@@ -94,6 +95,7 @@ export function CategoryPage() {
   const section = findSectionBySlug(sectionSlug);
   const settings = useGuestSettings();
   const { language, t } = useI18n();
+  const backendContent = useBackendContent();
 
   if (!section) return <Navigate to="/sections" replace />;
 
@@ -102,7 +104,8 @@ export function CategoryPage() {
 
   const Icon = getContentIcon(category.icon);
   const entities = getCatalogEntities(category.id, category.entityIds, category.entityType, settings.regionId);
-  const materialCount = isRegionalSection(section) ? getCategoryMaterialCountForRegion(category, settings.regionId) : category.entityIds.length;
+  const categoryPlaces = backendContent.places.filter((place) => place.categoryId === category.id && place.regionId === settings.regionId);
+  const materialCount = category.entityType === 'place' ? categoryPlaces.length : isRegionalSection(section) ? getCategoryMaterialCountForRegion(category, settings.regionId) : category.entityIds.length;
   const relatedCategories = appCategories.filter((item) => item.sectionId === section.id && item.id !== category.id).slice(0, 4);
 
   return (
@@ -135,10 +138,7 @@ export function CategoryPage() {
 
           <div className="catalog-card-list">
             {category.entityType === 'place'
-              ? category.entityIds
-                .map((id) => places.find((place) => place.id === id))
-                .filter(isPresent)
-                .filter((place) => place.regionId === settings.regionId)
+              ? categoryPlaces
                 .map((place) => <PlaceCard place={place} from={`/sections/${section.slug}/${category.slug}`} key={place.id} />)
               : entities.map((entity) => (
                 <Link className="catalog-card" to={entity.path} state={{ from: `/sections/${section.slug}/${category.slug}` }} key={entity.id}>

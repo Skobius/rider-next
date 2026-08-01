@@ -15,6 +15,14 @@ export interface BackendContent {
   error: string;
 }
 
+export const backendContentUpdatedEvent = 'motohub:content-updated';
+
+export function notifyBackendContentUpdated() {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent(backendContentUpdatedEvent));
+  }
+}
+
 const categoryToSearch: Record<string, SearchCategory> = {
   'places-services': 'service',
   'places-tire-services': 'service',
@@ -191,16 +199,24 @@ export function useBackendContent() {
 
   useEffect(() => {
     let alive = true;
-    loadBackendContent()
+
+    function refresh() {
+      setContent((current) => ({ ...current, loading: Boolean(supabase) }));
+      loadBackendContent()
       .then((nextContent) => {
         if (alive) setContent(nextContent);
       })
       .catch(() => {
         if (alive) setContent({ ...fallbackContent, error: 'Backend content unavailable, static fallback is used.' });
       });
+    }
+
+    refresh();
+    window.addEventListener(backendContentUpdatedEvent, refresh);
 
     return () => {
       alive = false;
+      window.removeEventListener(backendContentUpdatedEvent, refresh);
     };
   }, []);
 

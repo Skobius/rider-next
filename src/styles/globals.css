@@ -2292,8 +2292,28 @@ textarea {
   border-color: rgba(255, 100, 24, 0.55);
 }
 
+.admin-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.admin-checkbox {
+  min-height: 46px;
+  align-items: center;
+  align-self: end;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--soft);
+  padding: 12px 14px;
+}
+
 @media (max-width: 760px) {
   .admin-content-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-form-grid {
     grid-template-columns: 1fr;
   }
 }

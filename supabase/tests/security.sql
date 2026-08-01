@@ -198,6 +198,13 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'user published content'; end if;
+  begin
+    perform public.admin_update_place('rolling-moto-shop-smolensk', '{"name":"Bad"}'::jsonb);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'user used admin_update_place'; end if;
 end $$;
 reset session authorization;
 
@@ -258,6 +265,13 @@ begin
   if not found then raise exception 'moderator cannot update own-region visit report'; end if;
   insert into public.verification_events (entity_type, entity_id, place_id, region_id, source, status, created_by)
   values ('place', 'rolling-moto-shop-smolensk', 'rolling-moto-shop-smolensk', 'smolensk-oblast', 'user_report', 'confirmed', '00000000-0000-4000-8000-000000000004');
+  begin
+    perform public.admin_update_place('rolling-moto-shop-smolensk', '{"name":"Bad moderator update"}'::jsonb);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'moderator used admin_update_place'; end if;
 end $$;
 reset session authorization;
 
@@ -266,8 +280,39 @@ select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000005
 do $$
 declare
   forbidden_succeeded boolean;
+  versions_before integer;
+  versions_after integer;
 begin
   perform public.update_content_summary('places', 'rolling-moto-shop-smolensk', '{"ru":"Rolling Moto Shop"}'::jsonb, '{"ru":"Security check"}'::jsonb, 'published');
+  select count(*) into versions_before from public.content_versions where entity_type = 'place' and entity_id = 'rolling-moto-shop-smolensk';
+  perform public.admin_update_place(
+    'rolling-moto-shop-smolensk',
+    jsonb_build_object(
+      'name', 'Rolling Moto Admin',
+      'short_description', 'Admin full edit check',
+      'full_description', 'Full description changed by protected RPC',
+      'category_id', 'moto-shops',
+      'region_id', 'smolensk-oblast',
+      'status', 'published',
+      'verification_status', 'confirmed',
+      'business_status', 'open',
+      'information_checked_at', '31.07.2026',
+      'coordinates', jsonb_build_array(31.972202, 54.791412),
+      'map_visibility', true,
+      'map_url', 'https://yandex.ru/maps/?pt=31.972202,54.791412&z=16&l=map',
+      'branches', jsonb_build_array(jsonb_build_object('id', 'main', 'address', jsonb_build_object('ru', 'Smolensk test address'), 'phone', '+70000000000', 'schedule', jsonb_build_object('ru', '10:00-18:00'))),
+      'contacts', jsonb_build_array(jsonb_build_object('type', 'phone', 'value', '+70000000000'), jsonb_build_object('type', 'website', 'value', 'rollingmoto.ru', 'url', 'https://www.rollingmoto.ru/')),
+      'tags', jsonb_build_array('rolling', 'admin-check')
+    )
+  );
+  select count(*) into versions_after from public.content_versions where entity_type = 'place' and entity_id = 'rolling-moto-shop-smolensk';
+  if versions_after <= versions_before then raise exception 'admin_update_place did not create content version'; end if;
+  if not exists (select 1 from public.audit_log where action = 'admin_update_place' and target_id = 'rolling-moto-shop-smolensk') then
+    raise exception 'admin_update_place did not create audit log';
+  end if;
+  if not exists (select 1 from public.places where id = 'rolling-moto-shop-smolensk' and name->>'ru' = 'Rolling Moto Admin' and business_status = 'open') then
+    raise exception 'admin_update_place did not update place fields';
+  end if;
   begin
     perform public.update_content_summary('places', 'security-draft-place', '{"ru":"Bad"}'::jsonb, '{"ru":"Bad"}'::jsonb, 'published');
     forbidden_succeeded := true;
@@ -275,6 +320,13 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'admin updated content outside region scope'; end if;
+  begin
+    perform public.admin_update_place('security-draft-place', '{"name":"Bad region update"}'::jsonb);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'admin used admin_update_place outside region scope'; end if;
   begin
     perform public.assign_role('00000000-0000-4000-8000-000000000001', 'superadmin', 'global', null);
     forbidden_succeeded := true;
@@ -355,6 +407,13 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'blocked user used privileged RPC'; end if;
+  begin
+    perform public.admin_update_place('rolling-moto-shop-smolensk', '{"name":"Bad blocked update"}'::jsonb);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'blocked user used admin_update_place'; end if;
 end $$;
 reset session authorization;
 
