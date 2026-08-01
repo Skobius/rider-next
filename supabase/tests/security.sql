@@ -17,6 +17,17 @@ where user_id in (
 );
 delete from public.owner_confirmations
 where confirmed_by = '00000000-0000-4000-8000-000000000003';
+delete from public.content_versions
+where entity_type = 'place' and entity_id like 'security-submitted-place%';
+delete from public.audit_log
+where target_id like 'security-submitted-place%'
+   or (target_type = 'content_submission' and after_data->>'slug' like 'security-submitted-place%');
+delete from public.places
+where id like 'security-submitted-place%'
+   or source_static_id like 'submission:%';
+delete from public.content_submissions
+where proposed_data->>'title' like 'Security Submitted Place%'
+   or proposed_data->>'title' like 'Rolling Moto% Duplicate';
 
 insert into auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, raw_app_meta_data, raw_user_meta_data, created_at, updated_at)
 values
@@ -135,6 +146,20 @@ begin
   end;
   if forbidden_succeeded then raise exception 'guest created submission'; end if;
   begin
+    perform public.submit_place_submission(jsonb_build_object(
+      'title', 'Guest Place',
+      'category_id', 'places-services',
+      'region_id', 'smolensk-oblast',
+      'address', 'Guest address',
+      'description', 'Guest description',
+      'source_comment', 'Guest source'
+    ));
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'guest used submit_place_submission'; end if;
+  begin
     insert into public.visit_reports (user_id, place_id, region_id)
     values ('00000000-0000-4000-8000-000000000001', 'rolling-moto-shop-smolensk', 'smolensk-oblast');
     forbidden_succeeded := true;
@@ -157,6 +182,8 @@ select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000001
 do $$
 declare
   forbidden_succeeded boolean;
+  user_submission_id uuid;
+  duplicate_submission_id uuid;
 begin
   update public.profiles set display_name = 'Security User Updated' where id = '00000000-0000-4000-8000-000000000001';
   if not found then raise exception 'user cannot update own profile'; end if;
@@ -205,6 +232,52 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'user used admin_update_place'; end if;
+
+  user_submission_id := public.submit_place_submission(jsonb_build_object(
+    'title', 'Security Submitted Place',
+    'category_id', 'places-services',
+    'region_id', 'smolensk-oblast',
+    'address', 'Security address 1',
+    'description', 'Useful for security tests',
+    'source_comment', 'Security test source',
+    'phone', '+70000000001',
+    'website', 'https://security-place.example.test',
+    'lng', '31.900001',
+    'lat', '54.700001',
+    'schedule', '10:00-18:00'
+  ));
+  if not exists (
+    select 1 from public.content_submissions
+    where id = user_submission_id
+      and author_id = '00000000-0000-4000-8000-000000000001'
+      and status = 'submitted'
+  ) then
+    raise exception 'submit_place_submission did not create submitted row';
+  end if;
+  begin
+    perform public.approve_place_submission(user_submission_id, false);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'user approved own place submission'; end if;
+
+  duplicate_submission_id := public.submit_place_submission(jsonb_build_object(
+    'title', 'Rolling Moto Duplicate',
+    'category_id', 'moto-shops',
+    'region_id', 'smolensk-oblast',
+    'address', 'Смоленск, посёлок Серебрянка, 84Б',
+    'description', 'Duplicate check description',
+    'source_comment', 'Security duplicate source',
+    'phone', '+79532687636'
+  ));
+  if not exists (
+    select 1 from public.content_submissions
+    where id = duplicate_submission_id
+      and status = 'submitted'
+  ) then
+    raise exception 'duplicate submission was not created by user RPC';
+  end if;
 end $$;
 reset session authorization;
 
@@ -245,6 +318,11 @@ select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000004
 do $$
 declare
   forbidden_succeeded boolean;
+  own_region_submission_id uuid;
+  other_region_submission_id uuid;
+  duplicate_submission_id uuid;
+  approval_result jsonb;
+  created_place_id text;
 begin
   if not exists (select 1 from public.content_submissions where id = '20000000-0000-4000-8000-000000000001') then
     raise exception 'moderator cannot read own-region submission';
@@ -272,8 +350,88 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'moderator used admin_update_place'; end if;
+
+  select id into own_region_submission_id
+  from public.content_submissions
+  where proposed_data->>'title' = 'Security Submitted Place'
+  order by created_at desc
+  limit 1;
+  approval_result := public.approve_place_submission(own_region_submission_id, false);
+  created_place_id := approval_result->>'id';
+  if created_place_id is null then raise exception 'approve_place_submission did not return id'; end if;
+  if not exists (
+    select 1 from public.places
+    where id = created_place_id
+      and status = 'published'
+      and name->>'ru' = 'Security Submitted Place'
+      and source_static_id = 'submission:' || own_region_submission_id::text
+  ) then
+    raise exception 'approved submission did not publish place';
+  end if;
+  if not exists (
+    select 1 from public.content_submissions
+    where id = own_region_submission_id
+      and status = 'approved'
+      and published_entity_id = created_place_id
+  ) then
+    raise exception 'approve_place_submission did not update submission atomically';
+  end if;
+  begin
+    perform public.approve_place_submission(own_region_submission_id, false);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'approve_place_submission approved twice'; end if;
+
+  other_region_submission_id := '20000000-0000-4000-8000-000000000002';
+  begin
+    perform public.approve_place_submission(other_region_submission_id, false);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'moderator approved other-region submission'; end if;
+
+  select id into duplicate_submission_id
+  from public.content_submissions
+  where proposed_data->>'title' = 'Rolling Moto Duplicate'
+  order by created_at desc
+  limit 1;
+  if not exists (select 1 from public.find_place_submission_duplicates(duplicate_submission_id)) then
+    raise exception 'duplicates were not detected';
+  end if;
+  begin
+    perform public.approve_place_submission(duplicate_submission_id, false);
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'probable duplicate approved without confirmation'; end if;
+  perform public.approve_place_submission(duplicate_submission_id, true);
 end $$;
 reset session authorization;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from public.content_versions
+    where entity_type = 'place'
+      and entity_id like 'security-submitted-place%'
+  ) then
+    raise exception 'approve_place_submission did not create content version';
+  end if;
+  if not exists (
+    select 1
+    from public.audit_log
+    where action = 'approve_place_submission'
+      and target_type = 'content_submission'
+      and after_data ? 'published_entity_id'
+  ) then
+    raise exception 'approve_place_submission did not create audit log';
+  end if;
+end $$;
 
 set session authorization authenticated;
 select set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-000000000005', false);
@@ -392,6 +550,20 @@ begin
     forbidden_succeeded := false;
   end;
   if forbidden_succeeded then raise exception 'blocked user created submission'; end if;
+  begin
+    perform public.submit_place_submission(jsonb_build_object(
+      'title', 'Blocked Place',
+      'category_id', 'places-services',
+      'region_id', 'smolensk-oblast',
+      'address', 'Blocked address',
+      'description', 'Blocked description',
+      'source_comment', 'Blocked source'
+    ));
+    forbidden_succeeded := true;
+  exception when others then
+    forbidden_succeeded := false;
+  end;
+  if forbidden_succeeded then raise exception 'blocked user used submit_place_submission'; end if;
   begin
     insert into public.visit_reports (user_id, place_id, region_id)
     values ('00000000-0000-4000-8000-000000000007', 'rolling-moto-shop-smolensk', 'smolensk-oblast');
