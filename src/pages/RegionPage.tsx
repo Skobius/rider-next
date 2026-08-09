@@ -82,7 +82,7 @@ export function RegionPage() {
         <section className="soft-callout">
           <strong>{t('region.calloutTitle')}</strong>
           <p>{t('region.calloutText')}</p>
-          <Link to="/feedback">{t('region.suggest')}</Link>
+          <Link to="/profile/submissions">{t('region.suggest')}</Link>
         </section>
       ) : null}
     </section>

@@ -42,7 +42,7 @@ export function AppShell() {
 
   return (
     <div className="motohub-app">
-      <aside className="motohub-sidebar" aria-label="Навигация MotoHub">
+      <aside className="motohub-sidebar" aria-label="Навигация МотоГде">
         <Link className="motohub-sidebar__brand" to="/search" aria-label="МотоГде">
           <img className="motohub-logo__image motohub-logo__image--dark" src="/assets/brand/motogde-logo-dark.png" alt="МотоГде" />
           <img className="motohub-logo__image motohub-logo__image--light" src="/assets/brand/motogde-logo-light.png" alt="МотоГде" />

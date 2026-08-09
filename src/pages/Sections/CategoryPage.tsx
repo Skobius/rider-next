@@ -180,7 +180,7 @@ export function CategoryPage() {
         </div>
       </section>
 
-      <Link className="profile-primary-action profile-secondary-action" to={`/feedback?category=${category.id}`}>
+      <Link className="profile-primary-action profile-secondary-action" to={category.entityType === 'place' ? '/profile/submissions' : `/feedback?category=${category.id}`}>
         {t('sections.suggestInfo')}
       </Link>
     </section>

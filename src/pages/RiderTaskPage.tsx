@@ -146,7 +146,7 @@ export function RiderTaskPage() {
           <div className="empty-state task-map-shortcut">
             <h2>В этом регионе пока нет подходящих мест</h2>
             <p>Сама инструкция работает, а региональные места появятся после наполнения и проверки.</p>
-            <Link className="profile-primary-action" to="/feedback">Предложить место</Link>
+            <Link className="profile-primary-action" to="/profile/submissions">Предложить место</Link>
           </div>
         )}
       </section>

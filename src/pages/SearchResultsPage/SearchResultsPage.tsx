@@ -215,7 +215,7 @@ export function SearchResultsPage() {
           <div><Search size={30} aria-hidden="true" /></div>
           <h2>{settings.regionId === 'smolensk-oblast' ? t('search.emptyTitle') : t('search.regionEmptyTitle')}</h2>
           <p>{t('search.emptyText')}</p>
-          <Link className="profile-primary-action" to="/feedback">{settings.regionId === 'smolensk-oblast' ? t('search.suggestPlace') : t('search.regionEmptyAction')}</Link>
+          <Link className="profile-primary-action" to={settings.regionId === 'smolensk-oblast' ? '/profile/submissions' : '/feedback'}>{settings.regionId === 'smolensk-oblast' ? t('search.suggestPlace') : t('search.regionEmptyAction')}</Link>
         </section>
       )}
     </section>

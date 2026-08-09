@@ -1,5 +1,19 @@
-import { ArrowLeft, CheckCircle2, ClipboardList, MessageSquare, ShieldCheck, XCircle } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import {
+  ArrowLeft,
+  CalendarDays,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  LocateFixed,
+  MapPin,
+  MessageSquare,
+  Phone,
+  ShieldCheck,
+  Tag,
+  UserRound,
+  XCircle,
+} from 'lucide-react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { appCategories } from '../../data/categories';
 import { getRegionLabel } from '../../data/regions';
@@ -68,14 +82,31 @@ const statuses: ReviewStatus[] = ['submitted', 'in_review', 'changes_requested',
 const statusLabels: Record<ReviewStatus, string> = {
   submitted: 'На проверке',
   in_review: 'В работе',
-  changes_requested: 'Нужны уточнения',
+  changes_requested: 'Нужно уточнение',
   approved: 'Одобрено',
   rejected: 'Отклонено',
   cancelled: 'Отменено',
 };
 
+const finalStatuses: ReviewStatus[] = ['approved', 'rejected', 'cancelled'];
+
+const visitStatusLabels: Record<VisitReportRow['status'], string> = {
+  submitted: 'На проверке',
+  accepted: 'Принято',
+  rejected: 'Отклонено',
+};
+
+const recheckStatusLabels: Record<string, string> = {
+  due_soon: 'Скоро перепроверка',
+  expired: 'Нужна перепроверка',
+  stale: 'Давно не проверялось',
+  missing: 'Нет проверки',
+};
+
 function text(value: unknown) {
-  return typeof value === 'string' ? value : '';
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number') return String(value);
+  return '';
 }
 
 function preview(value: unknown) {
@@ -84,9 +115,44 @@ function preview(value: unknown) {
   return JSON.stringify(value, null, 2);
 }
 
+function formatDate(value: string | null) {
+  return value ? new Date(value).toLocaleDateString('ru-RU') : 'Нет данных';
+}
+
 function getCategoryTitle(categoryId: string, language: 'ru' | 'en') {
   const category = appCategories.find((item) => item.id === categoryId);
-  return category ? getLocalizedText(category.title, language) : categoryId;
+  return category ? getLocalizedText(category.title, language) : categoryId || 'Не указана';
+}
+
+function getPersonLabel(value?: unknown) {
+  if (typeof value !== 'string') return 'Пользователь';
+  if (!value || /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)) return 'Пользователь';
+  return value;
+}
+
+function getQueueTitle(statusFilter: ReviewStatus | 'all') {
+  if (statusFilter === 'all') return 'Все заявки';
+  return statusLabels[statusFilter];
+}
+
+function getRecheckStatusLabel(status: string) {
+  return recheckStatusLabels[status] ?? 'Нужна проверка';
+}
+
+function statusClass(status: ReviewStatus | VisitReportRow['status']) {
+  if (status === 'approved' || status === 'accepted') return 'moderation-status--approved';
+  if (status === 'rejected') return 'moderation-status--rejected';
+  if (status === 'changes_requested') return 'moderation-status--changes';
+  return 'moderation-status--pending';
+}
+
+function infoLine(label: string, value: string, icon: ReactNode, wide = false) {
+  return (
+    <span className={`moderation-field ${wide ? 'moderation-field--wide' : ''}`}>
+      <b>{icon}{label}</b>
+      <small>{value || 'Не указано'}</small>
+    </span>
+  );
 }
 
 export function ModerationPage() {
@@ -162,7 +228,7 @@ export function ModerationPage() {
     if (!supabase) return;
     const message = requireMessage(item.id);
     if ((nextStatus === 'changes_requested' || nextStatus === 'rejected') && !message) {
-      setError('Для уточнений или отклонения нужен комментарий заявителю.');
+      setError('Для уточнения или отклонения нужен комментарий заявителю.');
       return;
     }
 
@@ -266,14 +332,17 @@ export function ModerationPage() {
     await loadItems();
   }
 
-  function messageField(id: string, placeholder = 'Комментарий заявителю, если нужен') {
+  function messageField(id: string, placeholder = 'Комментарий заявителю') {
     return (
-      <input
-        className="auth-input"
-        value={messageById[id] ?? ''}
-        onChange={(event) => setMessageById((current) => ({ ...current, [id]: event.target.value }))}
-        placeholder={placeholder}
-      />
+      <label className="moderation-comment">
+        <span>Комментарий</span>
+        <input
+          className="auth-input"
+          value={messageById[id] ?? ''}
+          onChange={(event) => setMessageById((current) => ({ ...current, [id]: event.target.value }))}
+          placeholder={placeholder}
+        />
+      </label>
     );
   }
 
@@ -293,150 +362,221 @@ export function ModerationPage() {
   }
 
   return (
-    <section className="motohub-screen simple-screen">
+    <section className="motohub-screen simple-screen moderation-screen">
       <Link className="back-link" to="/profile"><ArrowLeft size={18} aria-hidden="true" />Назад в профиль</Link>
       <header className="simple-screen__header">
         <p>Модерация</p>
-        <h1>Очередь заявок</h1>
-        <span>Предложения новых мест, пользовательские сигналы и заявки на владение карточками.</span>
+        <h1>Заявки пользователей</h1>
+        <span>Проверяйте новые места, уточнения и служебные заявки без лишнего шума.</span>
       </header>
 
-      <div className="search-filter-row">
+      <div className="search-filter-row moderation-filter-row">
         <button className={statusFilter === 'all' ? 'is-active' : ''} type="button" onClick={() => setStatusFilter('all')}>Все</button>
         {statuses.map((status) => <button className={statusFilter === status ? 'is-active' : ''} key={status} type="button" onClick={() => setStatusFilter(status)}>{statusLabels[status]}</button>)}
       </div>
 
-      {notice ? <p>{notice}</p> : null}
+      {notice ? <p className="form-success">{notice}</p> : null}
       {error ? <p className="form-error">{error}</p> : null}
 
-      <section className="profile-group">
-        <h2>Предложения мест</h2>
-        <div className="settings-list">
+      <section className="profile-group moderation-primary-section">
+        <div className="moderation-section-heading">
+          <div>
+            <h2>{getQueueTitle(statusFilter)}</h2>
+            <p>Новые предложения мест и изменения, которые требуют решения модератора.</p>
+          </div>
+          <span>{submissions.length}</span>
+        </div>
+
+        <div className="moderation-list">
           {submissions.map((item) => {
             const data = item.proposed_data ?? {};
             const isPlaceProposal = item.entity_type === 'place' && item.submission_type === 'create_entity';
             const duplicates = duplicatesById[item.id] ?? [];
+            const title = isPlaceProposal ? text(data.title) || 'Новое место' : `${item.submission_type} · ${item.entity_type}`;
+            const canReview = !finalStatuses.includes(item.status);
+
             return (
-              <article className="favorite-row admin-review-card" key={item.id}>
-                <span className="settings-list__icon"><ClipboardList size={19} aria-hidden="true" /></span>
-                <span className="settings-list__copy">
-                  <strong>{isPlaceProposal ? text(data.title) || 'Новое место' : `${item.submission_type} · ${item.entity_type}`}</strong>
-                  <small>{getRegionLabel(item.region_id)} · {statusLabels[item.status]} · {new Date(item.created_at).toLocaleDateString('ru-RU')}</small>
-                  <small>Автор: {item.author_id}</small>
-                  {isPlaceProposal ? (
-                    <div className="submission-review-grid">
-                      <span><b>Категория</b>{getCategoryTitle(text(data.category_id), language)}</span>
-                      <span><b>Адрес</b>{text(data.address)}</span>
-                      <span><b>Контакты</b>{[text(data.phone), text(data.website)].filter(Boolean).join(' · ') || 'Не указаны'}</span>
-                      <span><b>График</b>{text(data.schedule) || 'Не указан'}</span>
-                      <span><b>Координаты</b>{text(data.lng) && text(data.lat) ? `${text(data.lng)}, ${text(data.lat)}` : 'Не указаны'}</span>
-                      <span><b>Источник</b>{text(data.source_comment)}</span>
-                      <span className="submission-review-grid__wide"><b>Описание</b>{text(data.description)}</span>
-                      {text(data.extra) ? <span className="submission-review-grid__wide"><b>Дополнительно</b>{text(data.extra)}</span> : null}
+              <article className="moderation-card" key={item.id}>
+                <header className="moderation-card__header">
+                  <div>
+                    <span className="moderation-eyebrow"><ClipboardList size={15} /> Заявка</span>
+                    <h3>{title}</h3>
+                  </div>
+                  <span className={`moderation-status ${statusClass(item.status)}`}>{statusLabels[item.status]}</span>
+                </header>
+
+                <div className="moderation-meta-grid">
+                  {infoLine('Дата', formatDate(item.created_at), <CalendarDays size={14} />)}
+                  {infoLine('Автор', getPersonLabel(), <UserRound size={14} />)}
+                  {infoLine('Регион', getRegionLabel(item.region_id), <MapPin size={14} />)}
+                  {infoLine('Категория', isPlaceProposal ? getCategoryTitle(text(data.category_id), language) : item.entity_type, <Tag size={14} />)}
+                  {isPlaceProposal ? infoLine('Адрес', text(data.address), <MapPin size={14} />, true) : null}
+                  {isPlaceProposal ? infoLine('Контакты', [text(data.phone), text(data.website)].filter(Boolean).join(' · '), <Phone size={14} />, true) : null}
+                  {isPlaceProposal ? infoLine('Координаты', text(data.lng) && text(data.lat) ? `${text(data.lng)}, ${text(data.lat)}` : '', <LocateFixed size={14} />) : null}
+                  {item.reason ? infoLine('Причина', item.reason, <MessageSquare size={14} />, true) : null}
+                </div>
+
+                {isPlaceProposal ? (
+                  <div className="moderation-copy-grid">
+                    <div className="moderation-copy-block">
+                      <b><FileText size={14} /> Описание</b>
+                      <p>{text(data.description) || 'Описание не указано.'}</p>
                     </div>
-                  ) : (
-                    <pre>{preview(item.proposed_data)}</pre>
-                  )}
-                  {duplicates.length ? (
-                    <div className="soft-callout submission-duplicates">
-                      <strong>Возможные совпадения</strong>
-                      {duplicates.map((duplicate) => (
-                        <Link to={`/place/${duplicate.place_id}`} key={duplicate.place_id}>
-                          {duplicate.title} · {duplicate.reason}
-                        </Link>
-                      ))}
-                      <label className="auth-consent admin-checkbox">
-                        <input
-                          type="checkbox"
-                          checked={duplicateConfirmedById[item.id] ?? false}
-                          onChange={(event) => setDuplicateConfirmedById((current) => ({ ...current, [item.id]: event.target.checked }))}
-                        />
-                        Всё равно создать новое место
-                      </label>
+                    <div className="moderation-copy-block">
+                      <b><MessageSquare size={14} /> Источник и дополнительно</b>
+                      <p>{[text(data.source_comment), text(data.extra)].filter(Boolean).join('\n') || 'Дополнительной информации нет.'}</p>
                     </div>
-                  ) : null}
-                  {item.published_entity_id ? <Link to={`/place/${item.published_entity_id}`}>Открыть опубликованную карточку</Link> : null}
-                  {messageField(item.id, 'Комментарий обязателен для уточнения или отклонения')}
-                  <span className="admin-action-row">
-                    <button type="button" disabled={busyId === item.id} onClick={() => setSubmissionStatus(item, 'in_review')}><MessageSquare size={15} />В работу</button>
-                    <button type="button" disabled={busyId === item.id} onClick={() => setSubmissionStatus(item, 'changes_requested')}>Уточнить</button>
-                    {isPlaceProposal && item.status === 'submitted' ? (
-                      <button type="button" disabled={busyId === item.id} onClick={() => approvePlaceSubmission(item)}><CheckCircle2 size={15} />Одобрить</button>
-                    ) : (
-                      <button type="button" disabled={busyId === item.id} onClick={() => setSubmissionStatus(item, 'approved')}><CheckCircle2 size={15} />Одобрить статус</button>
-                    )}
-                    <button type="button" disabled={busyId === item.id} onClick={() => setSubmissionStatus(item, 'rejected')}><XCircle size={15} />Отклонить</button>
-                  </span>
-                </span>
+                  </div>
+                ) : (
+                  <pre className="moderation-json">{preview(item.proposed_data)}</pre>
+                )}
+
+                {duplicates.length ? (
+                  <div className="soft-callout submission-duplicates moderation-duplicates">
+                    <strong>Возможные совпадения</strong>
+                    {duplicates.map((duplicate) => (
+                      <Link to={`/place/${duplicate.place_id}`} key={duplicate.place_id}>
+                        {duplicate.title} · {duplicate.reason}
+                      </Link>
+                    ))}
+                    <label className="auth-consent admin-checkbox">
+                      <input
+                        type="checkbox"
+                        checked={duplicateConfirmedById[item.id] ?? false}
+                        onChange={(event) => setDuplicateConfirmedById((current) => ({ ...current, [item.id]: event.target.checked }))}
+                      />
+                      Всё равно создать новое место
+                    </label>
+                  </div>
+                ) : null}
+
+                {item.published_entity_id ? <Link className="moderation-inline-link" to={`/place/${item.published_entity_id}`}>Открыть опубликованную карточку</Link> : null}
+
+                {canReview ? (
+                  <div className="moderation-actions-panel">
+                    <p>Комментарий нужен, если отправляете заявку на уточнение или отклоняете её.</p>
+                    {messageField(item.id, 'Что нужно уточнить или почему заявка отклонена')}
+                    <div className="moderation-action-row">
+                      {isPlaceProposal && item.status === 'submitted' ? (
+                        <button className="moderation-action moderation-action--approve" type="button" disabled={busyId === item.id} onClick={() => approvePlaceSubmission(item)}><CheckCircle2 size={16} />Одобрить</button>
+                      ) : (
+                        <button className="moderation-action moderation-action--approve" type="button" disabled={busyId === item.id} onClick={() => setSubmissionStatus(item, 'approved')}><CheckCircle2 size={16} />Одобрить</button>
+                      )}
+                      <button className="moderation-action moderation-action--clarify" type="button" disabled={busyId === item.id} onClick={() => setSubmissionStatus(item, 'changes_requested')}><MessageSquare size={16} />Нужно уточнение</button>
+                      <button className="moderation-action moderation-action--reject" type="button" disabled={busyId === item.id} onClick={() => setSubmissionStatus(item, 'rejected')}><XCircle size={16} />Отклонить</button>
+                    </div>
+                  </div>
+                ) : null}
               </article>
             );
           })}
-          {!submissions.length ? <p>Предложений с таким фильтром нет.</p> : null}
+          {!submissions.length ? <p className="version-note">Заявок с таким фильтром нет.</p> : null}
         </div>
       </section>
 
-      <section className="profile-group">
-        <h2>Сигналы пользователей</h2>
-        <div className="settings-list">
-          {visitReports.map((item) => (
-            <article className="favorite-row admin-review-card" key={item.id}>
-              <span className="settings-list__icon"><CheckCircle2 size={19} aria-hidden="true" /></span>
-              <span className="settings-list__copy">
-                <strong>{item.place_id}</strong>
-                <small>{item.region_id} · {item.status} · {new Date(item.created_at).toLocaleDateString('ru-RU')}</small>
-                <small>{item.is_open === true ? 'Было открыто' : item.is_open === false ? 'Было закрыто' : 'Пользователь был здесь'}</small>
-                {item.services_confirmed.length ? <small>Услуги: {item.services_confirmed.join(', ')}</small> : null}
-                {item.comment ? <pre>{item.comment}</pre> : null}
-                <span className="admin-action-row">
-                  <button type="button" disabled={busyId === item.id} onClick={() => void setVisitReportStatus(item, 'accepted')}><CheckCircle2 size={15} />Принять</button>
-                  <button type="button" disabled={busyId === item.id} onClick={() => void setVisitReportStatus(item, 'rejected')}><XCircle size={15} />Отклонить</button>
-                </span>
-              </span>
+      <section className={`profile-group moderation-secondary-section ${visitReports.length ? '' : 'moderation-empty-section'}`}>
+        <div className="moderation-section-heading">
+          <div>
+            <h2>Сигналы пользователей</h2>
+            <p>Сообщения о посещениях и актуальности карточек.</p>
+          </div>
+          <span>{visitReports.length}</span>
+        </div>
+        <div className="moderation-list moderation-list--compact">
+          {visitReports.length ? visitReports.map((item) => (
+            <article className="moderation-card moderation-card--compact" key={item.id}>
+              <header className="moderation-card__header">
+                <div>
+                  <span className="moderation-eyebrow"><CheckCircle2 size={15} /> Сигнал</span>
+                  <h3>Сигнал по месту</h3>
+                </div>
+                <span className={`moderation-status ${statusClass(item.status)}`}>{visitStatusLabels[item.status]}</span>
+              </header>
+              <div className="moderation-meta-grid">
+                {infoLine('Дата', formatDate(item.created_at), <CalendarDays size={14} />)}
+                {infoLine('Автор', getPersonLabel(), <UserRound size={14} />)}
+                {infoLine('Статус места', item.is_open === true ? 'Было открыто' : item.is_open === false ? 'Было закрыто' : 'Пользователь был здесь', <ShieldCheck size={14} />)}
+                {infoLine('Услуги', item.services_confirmed.join(', '), <Tag size={14} />)}
+              </div>
+              {item.comment ? <div className="moderation-copy-block"><b>Комментарий</b><p>{item.comment}</p></div> : null}
+              <div className="moderation-action-row moderation-action-row--small">
+                <button className="moderation-action moderation-action--approve" type="button" disabled={busyId === item.id} onClick={() => void setVisitReportStatus(item, 'accepted')}><CheckCircle2 size={16} />Принять</button>
+                <button className="moderation-action moderation-action--reject" type="button" disabled={busyId === item.id} onClick={() => void setVisitReportStatus(item, 'rejected')}><XCircle size={16} />Отклонить</button>
+              </div>
             </article>
-          ))}
-          {!visitReports.length ? <p>Пользовательских сигналов с таким фильтром нет.</p> : null}
+          )) : <p className="moderation-empty-note">Нет заявок.</p>}
         </div>
       </section>
 
-      <section className="profile-group">
-        <h2>Очередь перепроверки</h2>
-        <div className="settings-list">
+      <section className="profile-group moderation-secondary-section">
+        <div className="moderation-section-heading">
+          <div>
+            <h2>Очередь перепроверки</h2>
+            <p>Вторичный список карточек, у которых пора проверить актуальность.</p>
+          </div>
+          <span>{recheckItems.length}</span>
+        </div>
+        <div className="moderation-list moderation-list--compact">
           {recheckItems.map((item) => (
-            <article className="favorite-row admin-review-card" key={item.place_id}>
-              <span className="settings-list__icon"><ShieldCheck size={19} aria-hidden="true" /></span>
-              <span className="settings-list__copy">
-                <strong>{item.name?.ru ?? item.place_id}</strong>
-                <small>{item.region_id} · {item.category_id} · {item.recheck_status}</small>
-                <small>Последняя проверка: {item.last_verification_at ? new Date(item.last_verification_at).toLocaleDateString('ru-RU') : 'нет данных'}</small>
-                <Link to={`/place/${item.place_id}`}>Открыть карточку</Link>
-              </span>
+            <article className="moderation-card moderation-card--compact" key={item.place_id}>
+              <header className="moderation-card__header">
+                <div>
+                  <span className="moderation-eyebrow"><ShieldCheck size={15} /> Перепроверка</span>
+                  <h3>{item.name?.ru ?? item.place_id}</h3>
+                </div>
+                <span className="moderation-status moderation-status--changes">{getRecheckStatusLabel(item.recheck_status)}</span>
+              </header>
+              <div className="moderation-meta-grid">
+                {infoLine('Регион', getRegionLabel(item.region_id), <MapPin size={14} />)}
+                {infoLine('Категория', getCategoryTitle(item.category_id, language), <Tag size={14} />)}
+                {infoLine('Последняя проверка', formatDate(item.last_verification_at), <CalendarDays size={14} />)}
+                {infoLine('Ближайший срок', formatDate(item.nearest_expires_at), <CalendarDays size={14} />)}
+              </div>
+              <Link className="moderation-inline-link" to={`/place/${item.place_id}`}>Открыть карточку</Link>
             </article>
           ))}
-          {!recheckItems.length ? <p>Сейчас нет карточек, которым нужна перепроверка.</p> : null}
+          {!recheckItems.length ? <p className="version-note">Сейчас нет карточек, которым нужна перепроверка.</p> : null}
         </div>
       </section>
 
-      <section className="profile-group">
-        <h2>Заявки на владение</h2>
-        <div className="settings-list">
-          {claims.map((item) => (
-            <article className="favorite-row admin-review-card" key={item.id}>
-              <span className="settings-list__icon"><ShieldCheck size={19} aria-hidden="true" /></span>
-              <span className="settings-list__copy">
-                <strong>{item.place_id ?? 'Организация'}</strong>
-                <small>{item.region_id} · {statusLabels[item.status]} · {new Date(item.created_at).toLocaleDateString('ru-RU')}</small>
-                <pre>{preview(item.evidence)}</pre>
-                {messageField(item.id)}
-                <span className="admin-action-row">
-                  <button type="button" disabled={busyId === item.id} onClick={() => setClaimStatus(item.id, 'in_review')}>В работу</button>
-                  <button type="button" disabled={busyId === item.id} onClick={() => setClaimStatus(item.id, 'changes_requested')}>Уточнить</button>
-                  <button type="button" disabled={busyId === item.id} onClick={() => setClaimStatus(item.id, 'approved')}><CheckCircle2 size={15} />Одобрить</button>
-                  <button type="button" disabled={busyId === item.id} onClick={() => setClaimStatus(item.id, 'rejected')}><XCircle size={15} />Отклонить</button>
-                </span>
-              </span>
-            </article>
-          ))}
-          {!claims.length ? <p>Заявок с таким фильтром нет.</p> : null}
+      <section className={`profile-group moderation-secondary-section ${claims.length ? '' : 'moderation-empty-section'}`}>
+        <div className="moderation-section-heading">
+          <div>
+            <h2>Заявки на владение</h2>
+            <p>Отдельный поток для владельцев карточек.</p>
+          </div>
+          <span>{claims.length}</span>
+        </div>
+        <div className="moderation-list moderation-list--compact">
+          {claims.length ? claims.map((item) => {
+            const canReview = !finalStatuses.includes(item.status);
+            return (
+              <article className="moderation-card moderation-card--compact" key={item.id}>
+                <header className="moderation-card__header">
+                  <div>
+                    <span className="moderation-eyebrow"><ShieldCheck size={15} /> Владение</span>
+                    <h3>{item.place_id ?? 'Организация'}</h3>
+                  </div>
+                  <span className={`moderation-status ${statusClass(item.status)}`}>{statusLabels[item.status]}</span>
+                </header>
+                <div className="moderation-meta-grid">
+                  {infoLine('Регион', item.region_id, <MapPin size={14} />)}
+                  {infoLine('Дата', formatDate(item.created_at), <CalendarDays size={14} />)}
+                </div>
+                <pre className="moderation-json">{preview(item.evidence)}</pre>
+                {canReview ? (
+                  <div className="moderation-actions-panel">
+                    {messageField(item.id, 'Комментарий заявителю, если нужен')}
+                    <div className="moderation-action-row">
+                      <button className="moderation-action moderation-action--clarify" type="button" disabled={busyId === item.id} onClick={() => setClaimStatus(item.id, 'changes_requested')}>Нужно уточнение</button>
+                      <button className="moderation-action moderation-action--approve" type="button" disabled={busyId === item.id} onClick={() => setClaimStatus(item.id, 'approved')}><CheckCircle2 size={16} />Одобрить</button>
+                      <button className="moderation-action moderation-action--reject" type="button" disabled={busyId === item.id} onClick={() => setClaimStatus(item.id, 'rejected')}><XCircle size={16} />Отклонить</button>
+                    </div>
+                  </div>
+                ) : null}
+              </article>
+            );
+          }) : <p className="moderation-empty-note">Нет заявок.</p>}
         </div>
       </section>
     </section>

@@ -389,7 +389,7 @@ export function MapPage() {
         <header className="simple-screen__header">
           <p>{getRegionLabel(settings.regionId)}</p>
           <h1>Карта</h1>
-          <span>Места, маршруты и события MotoHub</span>
+          <span>Места, маршруты и события МотоГде</span>
         </header>
         <section className="empty-state">
           <div><MapPin size={30} aria-hidden="true" /></div>

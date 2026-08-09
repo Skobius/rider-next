@@ -18,8 +18,8 @@ export default defineConfig({
         'assets/brand/app-icon-512.png'
       ],
       manifest: {
-        name: 'МотоХаб',
-        short_name: 'МотоХаб',
+        name: 'МотоГде',
+        short_name: 'МотоГде',
         description: 'Локальный помощник мотоциклиста в Смоленске и области.',
         theme_color: '#071012',
         background_color: '#071012',

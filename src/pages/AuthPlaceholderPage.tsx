@@ -166,7 +166,7 @@ export function AuthPlaceholderPage() {
       <header className="simple-screen__header">
         <p>Аккаунт</p>
         <h1>{mode === 'signup' ? 'Регистрация' : mode === 'reset' ? 'Восстановление пароля' : mode === 'update' ? 'Новый пароль' : 'Вход'}</h1>
-        <span>Supabase Auth, без хранения паролей в MotoHub.</span>
+        <span>Supabase Auth, без хранения паролей в МотоГде.</span>
       </header>
 
       <div className="search-filter-row">

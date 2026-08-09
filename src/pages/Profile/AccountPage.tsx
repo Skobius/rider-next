@@ -61,7 +61,7 @@ export function AccountPage() {
       <header className="simple-screen__header">
         <p>Профиль</p>
         <h1>Личные данные</h1>
-        <span>Имя и регион, которые будут использоваться в МотоХабе.</span>
+        <span>Имя и регион, которые будут использоваться в МотоГде.</span>
       </header>
 
       {loading ? (
