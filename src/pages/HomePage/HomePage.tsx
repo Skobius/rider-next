@@ -173,7 +173,7 @@ export function HomePage() {
         </section>
         {installPrompt.canShowInstallUi ? (
           <button className="home-install-card" type="button" onClick={() => installPrompt.canNativeInstall ? void installPrompt.install() : setShowInstallSheet(true)}>
-            <img src="/assets/brand/app-icon-64.png" alt="" aria-hidden="true" />
+            <img src="/assets/brand/pwa-192x192.png" alt="" aria-hidden="true" />
             <span>
               <strong>МотоГде всегда под рукой</strong>
               <small>Установите приложение на телефон — быстрый запуск с главного экрана.</small>

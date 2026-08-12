@@ -42,7 +42,7 @@ export function InstallPage() {
       </header>
 
       <section className="install-card">
-        <img src="/assets/brand/app-icon-192.png" alt="" aria-hidden="true" />
+        <img src="/assets/brand/pwa-192x192.png" alt="" aria-hidden="true" />
         <div>
           <strong>{installPrompt.isInstalled ? 'МотоГде установлено' : installPrompt.canNativeInstall ? 'Установить в один клик' : getManualTitle(installPrompt.manualKind)}</strong>
           <span>{installPrompt.isInstalled ? 'Приложение уже открыто как PWA.' : t('installPage.noStores')}</span>

@@ -30,7 +30,7 @@ export function InstallManualSheet({ kind, onClose, onCopyLink }: InstallManualS
         <button className="install-sheet__close" type="button" onClick={onClose} aria-label="Закрыть">
           <X size={18} aria-hidden="true" />
         </button>
-        <img src="/assets/brand/app-icon-192.png" alt="" aria-hidden="true" />
+        <img src="/assets/brand/pwa-192x192.png" alt="" aria-hidden="true" />
         <h2>{getTitle(kind)}</h2>
         {kind === 'ios-safari' ? (
           <ol>

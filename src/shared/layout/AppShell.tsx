@@ -110,7 +110,7 @@ export function AppShell() {
       {toast ? <div className="motohub-toast" role="status">{toast.text}</div> : null}
       {installPrompt.shouldShowSoftPrompt && !softPromptClosed ? (
         <div className="install-soft-prompt" role="dialog" aria-label="Установить МотоГде">
-          <img src="/assets/brand/app-icon-64.png" alt="" aria-hidden="true" />
+          <img src="/assets/brand/pwa-192x192.png" alt="" aria-hidden="true" />
           <div>
             <strong>МотоГде можно установить как приложение</strong>
             <span>Быстрый запуск с главного экрана без магазина приложений.</span>
