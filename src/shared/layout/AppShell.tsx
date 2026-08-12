@@ -1,11 +1,15 @@
-import { Bell, ChevronRight, Layers3, Map, MapPin, Search, UserRound } from 'lucide-react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+﻿import { Bell, ChevronRight, Download, Layers3, Map, MapPin, Search, UserRound } from 'lucide-react';
+import { useState } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { getRegionLabel } from '../../data/regions';
 import { useAuthSession } from '../auth/useAuthSession';
 import { useI18n } from '../i18n/useI18n';
+import { InstallManualSheet } from '../pwa/InstallManualSheet';
+import { useInstallPrompt } from '../pwa/useInstallPrompt';
 import { useFavoriteSync } from '../storage/favoritesStore';
 import { useGuestSettings } from '../storage/guestSettings';
 import { useToastMessage } from '../ui/toastStore';
+import { useRegisterSW } from 'virtual:pwa-register/react';
 
 const navItems = [
   { to: '/search', labelKey: 'nav.search', icon: Search },
@@ -36,6 +40,11 @@ export function AppShell() {
   const settings = useGuestSettings();
   const { user } = useAuthSession();
   const location = useLocation();
+  const navigate = useNavigate();
+  const installPrompt = useInstallPrompt();
+  const [softPromptClosed, setSoftPromptClosed] = useState(false);
+  const [showInstallSheet, setShowInstallSheet] = useState(false);
+  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({ immediate: true });
   const pageTitle = getPageTitle(location.pathname);
   const region = getRegionLabel(settings.regionId);
   useFavoriteSync(user?.id);
@@ -83,6 +92,12 @@ export function AppShell() {
               <span>{region}</span>
               <ChevronRight size={15} aria-hidden="true" />
             </Link>
+            {installPrompt.canShowInstallUi ? (
+              <button className="desktop-install-link" type="button" onClick={() => installPrompt.canNativeInstall ? void installPrompt.install() : setShowInstallSheet(true)}>
+                <Download size={16} aria-hidden="true" />
+                <span>Установить</span>
+              </button>
+            ) : null}
             <Link className="desktop-icon-link" to="/notifications" aria-label={t('home.notificationsLabel')}>
               <Bell size={18} aria-hidden="true" />
             </Link>
@@ -93,6 +108,28 @@ export function AppShell() {
         </main>
       </div>
       {toast ? <div className="motohub-toast" role="status">{toast.text}</div> : null}
+      {installPrompt.shouldShowSoftPrompt && !softPromptClosed ? (
+        <div className="install-soft-prompt" role="dialog" aria-label="Установить МотоГде">
+          <img src="/assets/brand/app-icon-64.png" alt="" aria-hidden="true" />
+          <div>
+            <strong>МотоГде можно установить как приложение</strong>
+            <span>Быстрый запуск с главного экрана без магазина приложений.</span>
+          </div>
+          <button className="install-soft-prompt__primary" type="button" onClick={() => installPrompt.canNativeInstall ? void installPrompt.install() : setShowInstallSheet(true)}>
+            Установить
+          </button>
+          <button className="install-soft-prompt__ghost" type="button" onClick={() => { installPrompt.dismissSoftPrompt(); setSoftPromptClosed(true); }}>
+            Не сейчас
+          </button>
+        </div>
+      ) : null}
+      {needRefresh ? (
+        <div className="pwa-update-toast" role="status">
+          <span>Доступна новая версия МотоГде</span>
+          <button type="button" onClick={() => void updateServiceWorker(true)}>Обновить</button>
+        </div>
+      ) : null}
+      {showInstallSheet ? <InstallManualSheet kind={installPrompt.manualKind} onClose={() => setShowInstallSheet(false)} onCopyLink={installPrompt.copyInstallLink} /> : null}
       <nav className="motohub-nav" aria-label={t('nav.label')}>
         {navItems.map((item) => {
           const Icon = item.icon;
@@ -107,3 +144,5 @@ export function AppShell() {
     </div>
   );
 }
+
+

@@ -1,6 +1,7 @@
-import {
+﻿import {
   Bell,
   BookOpen,
+  Download,
   ChevronRight,
   Gauge,
   GraduationCap,
@@ -20,6 +21,8 @@ import { getRegionLabel } from '../../data/regions';
 import { searchMotohub } from '../../features/search/searchEngine';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
+import { InstallManualSheet } from '../../shared/pwa/InstallManualSheet';
+import { useInstallPrompt } from '../../shared/pwa/useInstallPrompt';
 import { useGuestSettings } from '../../shared/storage/guestSettings';
 
 const quickFindItems = [
@@ -74,7 +77,9 @@ export function HomePage() {
   const settings = useGuestSettings();
   const { language, t } = useI18n();
   const navigate = useNavigate();
+  const installPrompt = useInstallPrompt();
   const [query, setQuery] = useState('');
+  const [showInstallSheet, setShowInstallSheet] = useState(false);
   const savedRegion = getRegionLabel(settings.regionId);
   const suggestions = useMemo(() => {
     if (query.trim().length < 2) return [];
@@ -166,12 +171,23 @@ export function HomePage() {
             })}
           </div>
         </section>
+        {installPrompt.canShowInstallUi ? (
+          <button className="home-install-card" type="button" onClick={() => installPrompt.canNativeInstall ? void installPrompt.install() : setShowInstallSheet(true)}>
+            <img src="/assets/brand/app-icon-64.png" alt="" aria-hidden="true" />
+            <span>
+              <strong>МотоГде всегда под рукой</strong>
+              <small>Установите приложение на телефон — быстрый запуск с главного экрана.</small>
+            </span>
+            <b><Download size={16} aria-hidden="true" />Установить</b>
+          </button>
+        ) : null}
 
         <Link className="map-shortcut-card" to="/map">
           <span><Map size={20} aria-hidden="true" /></span>
           <strong>Показать места на карте</strong>
           <ChevronRight size={18} aria-hidden="true" />
         </Link>
+
 
         <section className="motohub-section">
           <h2>Всё для мотоциклиста</h2>
@@ -190,6 +206,10 @@ export function HomePage() {
           </div>
         </section>
       </main>
+      {showInstallSheet ? <InstallManualSheet kind={installPrompt.manualKind} onClose={() => setShowInstallSheet(false)} onCopyLink={installPrompt.copyInstallLink} /> : null}
     </section>
   );
 }
+
+
+

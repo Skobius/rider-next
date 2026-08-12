@@ -1,4 +1,4 @@
-import {
+﻿import {
   AppWindow,
   BarChart3,
   Bell,
@@ -111,6 +111,8 @@ export function ProfilePage() {
   const roles = useUserRoles();
   const region = getRegionLabel(profile?.home_region_id ?? settings.regionId);
   const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email || settings.displayName || t('profile.guestName');
+  const installTitle = installPrompt.isInstalled ? 'МотоГде установлено' : 'Установить приложение';
+  const installDescription = installPrompt.isInstalled ? 'Приложение уже добавлено на устройство' : t('profile.installDescription');
   const canSee = (required?: string) => {
     if (!required) return true;
     if (required === 'moderator') return roles.isModerator;
@@ -161,7 +163,7 @@ export function ProfilePage() {
         </div>
         <div>
           <MonitorSmartphone size={18} aria-hidden="true" />
-          <strong>{installPrompt.isInstalled ? t('profile.installedYes') : installPrompt.canInstall ? t('profile.installAvailable') : 'PWA'}</strong>
+          <strong>{installPrompt.isInstalled ? t('profile.installedYes') : installPrompt.canShowInstallUi ? t('profile.installAvailable') : 'PWA'}</strong>
           <span>{t('profile.install')}</span>
         </div>
       </section>
@@ -172,7 +174,8 @@ export function ProfilePage() {
           <div className="settings-list">
             {group.items.filter((item) => canSee(item.requires)).map((item) => {
               const Icon = item.icon;
-              const description = item.isRegion ? region : item.description ?? t(item.descriptionKey);
+              const description = item.titleKey === 'profile.installTitle' ? installDescription : item.isRegion ? region : item.description ?? t(item.descriptionKey);
+              const title = item.titleKey === 'profile.installTitle' ? installTitle : item.title ?? t(item.titleKey);
 
               return (
                 <Link className="settings-row" key={item.titleKey} to={item.to}>
@@ -180,7 +183,7 @@ export function ProfilePage() {
                     <Icon size={20} aria-hidden="true" />
                   </span>
                   <span className="settings-list__copy">
-                    <strong>{item.title ?? t(item.titleKey)}</strong>
+                    <strong>{title}</strong>
                     <small>{description}</small>
                   </span>
                   <ChevronRight size={18} aria-hidden="true" />
@@ -195,3 +198,4 @@ export function ProfilePage() {
     </section>
   );
 }
+
