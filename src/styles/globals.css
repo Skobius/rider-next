@@ -45,6 +45,7 @@
 }
 
 html {
+  min-height: 100%;
   background: var(--bg);
 }
 
@@ -52,11 +53,19 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
-  background:
+  background-color: #071012;
+  background-image:
     radial-gradient(circle at 50% -12%, rgba(255, 100, 24, 0.14), transparent 30%),
     linear-gradient(135deg, #03090b 0%, var(--bg) 42%, #020506 100%);
   color: var(--text);
+}
+
+#root {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
 }
 
 :root[data-theme="light"] {
@@ -110,6 +119,7 @@ textarea {
 .motohub-app,
 .motohub-app main {
   min-height: 100vh;
+  min-height: 100dvh;
 }
 
 .motohub-screen {
@@ -1581,19 +1591,19 @@ textarea {
 .motohub-nav {
   position: fixed;
   left: 50%;
-  bottom: max(12px, env(safe-area-inset-bottom));
+  bottom: 0;
   z-index: 20;
-  width: min(calc(100% - 28px), 448px);
+  width: min(100%, 480px);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
   transform: translateX(-50%);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
+  border-radius: 24px 24px 0 0;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.085), rgba(255, 255, 255, 0.035)),
     rgba(17, 25, 28, 0.86);
-  padding: 7px;
+  padding: 7px 7px calc(7px + max(8px, env(safe-area-inset-bottom)));
   box-shadow: 0 20px 42px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(22px);
 }
