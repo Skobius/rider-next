@@ -1593,7 +1593,8 @@ textarea {
   left: 50%;
   bottom: 0;
   z-index: 20;
-  width: min(100%, 480px);
+  width: calc(100% - 16px);
+  max-width: 448px;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 2px;
@@ -5515,11 +5516,15 @@ textarea {
 }
 
 .install-screen {
+  width: min(calc(100% - 32px), 430px);
   padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  overflow-x: clip;
 }
 
 .install-card,
 .install-manual-card {
+  max-width: 100%;
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: 24px;
   background: var(--panel);
@@ -5542,26 +5547,31 @@ textarea {
 
 .install-card div,
 .install-manual-card__copy {
+  min-width: 0;
   display: grid;
   gap: 6px;
 }
 
 .install-card strong,
 .install-manual-card h2 {
+  min-width: 0;
   margin: 0;
   color: var(--text);
   font-size: 20px;
   font-weight: 780;
   line-height: 1.1;
+  overflow-wrap: anywhere;
 }
 
 .install-card span,
 .install-manual-card p,
 .install-manual-card span {
+  min-width: 0;
   margin: 0;
   color: var(--muted);
   font-size: 14px;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .install-card .profile-primary-action {
@@ -5603,6 +5613,9 @@ textarea {
 }
 
 .secondary-action {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 42px;
   display: inline-flex;
   align-items: center;
@@ -5618,8 +5631,9 @@ textarea {
 }
 
 .install-manual-card__copy span {
-  display: inline-flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
   gap: 6px;
 }
 
@@ -5750,6 +5764,65 @@ textarea {
   }
 }
 
+@media (max-width: 900px) {
+  body:has(.install-screen) .motohub-nav {
+    left: 16px;
+    width: min(calc(100% - 32px), 358px);
+    max-width: none;
+    transform: none;
+  }
+
+  body:has(.install-screen) .motohub-nav__item {
+    min-width: 0;
+    font-size: 11px;
+  }
+
+  .install-screen {
+    width: min(100%, 390px);
+    max-width: 390px;
+    margin-right: auto;
+    margin-left: 0;
+    padding-right: 16px;
+    padding-left: 16px;
+  }
+
+  .install-screen .simple-screen__header h1 {
+    font-size: clamp(27px, 8vw, 32px);
+    line-height: 1.04;
+    overflow-wrap: anywhere;
+  }
+
+  .install-card,
+  .install-manual-card {
+    border-radius: 20px;
+  }
+
+  .install-card {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+    padding: 14px;
+  }
+
+  .install-card img {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+  }
+
+  .install-card strong,
+  .install-manual-card h2 {
+    font-size: 18px;
+  }
+
+  .install-manual-card {
+    padding: 14px;
+  }
+
+  .secondary-action {
+    padding: 0 12px;
+  }
+}
+
 @media (min-width: 1024px) {
   .home-install-card {
     display: none;
@@ -5808,6 +5881,8 @@ textarea {
 .install-sheet {
   position: relative;
   width: min(100%, 460px);
+  max-width: 100%;
+  min-width: 0;
   display: grid;
   gap: 14px;
   justify-self: center;
@@ -5876,21 +5951,25 @@ textarea {
 }
 
 .install-sheet__copy {
+  min-width: 0;
   display: grid;
   gap: 12px;
 }
 
 .install-sheet__copy p,
 .install-sheet__copy span {
+  min-width: 0;
   margin: 0;
   color: rgba(255, 255, 255, 0.74);
   font-size: 14px;
   line-height: 1.45;
+  overflow-wrap: anywhere;
 }
 
 .install-sheet__copy span {
-  display: inline-flex;
-  align-items: center;
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: start;
   gap: 7px;
 }
 

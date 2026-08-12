@@ -1,7 +1,7 @@
 ﻿import { useEffect, useSyncExternalStore } from 'react';
 
 type InstallStatus = 'already-installed' | 'native-install-available' | 'ios-manual-install' | 'browser-manual-install' | 'unsupported';
-type ManualInstallKind = 'ios-safari' | 'ios-other' | 'browser' | 'unsupported';
+type ManualInstallKind = 'ios-safari' | 'ios-other' | 'android-yandex' | 'browser' | 'unsupported';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -42,14 +42,15 @@ function getStandalone() {
 }
 
 function getPlatform() {
-  if (!isBrowser()) return { ios: false, safari: false, installCapable: false };
+  if (!isBrowser()) return { ios: false, safari: false, yandexAndroid: false, installCapable: false };
   const ua = navigator.userAgent || '';
   const platform = navigator.platform || '';
   const touchMac = platform === 'MacIntel' && navigator.maxTouchPoints > 1;
   const ios = /iPad|iPhone|iPod/.test(ua) || touchMac;
   const safari = /^((?!CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|Chrome|Android).)*Safari/i.test(ua);
+  const yandexAndroid = /Android/i.test(ua) && /YaBrowser/i.test(ua);
   const installCapable = 'serviceWorker' in navigator && window.isSecureContext;
-  return { ios, safari, installCapable };
+  return { ios, safari, yandexAndroid, installCapable };
 }
 
 function readNumber(key: string) {
@@ -85,7 +86,7 @@ function buildSnapshot(): InstallSnapshot {
     status = 'native-install-available';
   } else if (platform.installCapable) {
     status = 'browser-manual-install';
-    manualKind = 'browser';
+    manualKind = platform.yandexAndroid ? 'android-yandex' : 'browser';
   }
 
   return {

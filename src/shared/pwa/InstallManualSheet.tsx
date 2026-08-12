@@ -1,7 +1,7 @@
 ﻿import { CheckCircle2, Copy, ExternalLink, MoreHorizontal, Share, Smartphone, X } from 'lucide-react';
 import { useState } from 'react';
 
-type ManualInstallKind = 'ios-safari' | 'ios-other' | 'browser' | 'unsupported';
+type ManualInstallKind = 'ios-safari' | 'ios-other' | 'android-yandex' | 'browser' | 'unsupported';
 
 interface InstallManualSheetProps {
   kind: ManualInstallKind;
@@ -12,6 +12,7 @@ interface InstallManualSheetProps {
 function getTitle(kind: ManualInstallKind) {
   if (kind === 'ios-safari') return 'Как установить МотоГде';
   if (kind === 'ios-other') return 'Откройте в Safari';
+  if (kind === 'android-yandex') return 'Установите МотоГде через Google Chrome';
   return 'Установка через меню браузера';
 }
 
@@ -41,6 +42,15 @@ export function InstallManualSheet({ kind, onClose, onCopyLink }: InstallManualS
         ) : kind === 'ios-other' ? (
           <div className="install-sheet__copy">
             <p>На iPhone установка работает через Safari. Скопируйте ссылку, откройте её в Safari и добавьте МотоГде на экран Домой.</p>
+            <button className="secondary-action" type="button" onClick={copyLink}>
+              <Copy size={17} aria-hidden="true" />
+              {copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}
+            </button>
+          </div>
+        ) : kind === 'android-yandex' ? (
+          <div className="install-sheet__copy">
+            <p>Чтобы МотоГде запускалось как отдельное приложение с иконки на главном экране, откройте эту страницу в Google Chrome и нажмите «Установить».</p>
+            <span><ExternalLink size={16} aria-hidden="true" /> Скопируйте ссылку → откройте Chrome → вставьте её → нажмите «Установить МотоГде».</span>
             <button className="secondary-action" type="button" onClick={copyLink}>
               <Copy size={17} aria-hidden="true" />
               {copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}

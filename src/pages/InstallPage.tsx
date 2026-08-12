@@ -7,6 +7,7 @@ import { useInstallPrompt } from '../shared/pwa/useInstallPrompt';
 function getManualTitle(kind: string) {
   if (kind === 'ios-safari') return 'Как установить МотоГде на iPhone';
   if (kind === 'ios-other') return 'Откройте страницу в Safari';
+  if (kind === 'android-yandex') return 'Установите МотоГде через Google Chrome';
   return 'Как установить МотоГде';
 }
 
@@ -67,6 +68,15 @@ export function InstallPage() {
           ) : installPrompt.manualKind === 'ios-other' ? (
             <div className="install-manual-card__copy">
               <p>На iPhone установка работает через Safari. Скопируйте ссылку, откройте её в Safari и добавьте МотоГде на экран Домой.</p>
+              <button className="secondary-action" type="button" onClick={copyLink}>
+                <Copy size={17} aria-hidden="true" />
+                {copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}
+              </button>
+            </div>
+          ) : installPrompt.manualKind === 'android-yandex' ? (
+            <div className="install-manual-card__copy">
+              <p>Чтобы МотоГде запускалось как отдельное приложение с иконки на главном экране, откройте эту страницу в Google Chrome и нажмите «Установить».</p>
+              <p>Скопируйте ссылку → откройте Chrome → вставьте её → нажмите «Установить МотоГде».</p>
               <button className="secondary-action" type="button" onClick={copyLink}>
                 <Copy size={17} aria-hidden="true" />
                 {copied ? 'Ссылка скопирована' : 'Скопировать ссылку'}
