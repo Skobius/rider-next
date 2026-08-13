@@ -106,6 +106,7 @@ function mapPlace(row: Record<string, unknown>): PlaceItem {
     features: asArray(row.features),
     structuredServices: mapStructuredServices(row.place_service_definitions),
     tags: asArray<string>(row.tags),
+    searchKeywords: asArray<LocalizedText>(row.search_keywords),
     verified: verificationStatus === 'verified_mg67' || verificationStatus === 'confirmed',
     demo: false,
     featured: false,

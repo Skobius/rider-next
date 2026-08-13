@@ -5,11 +5,34 @@ const items = [
     id: 'tires',
     type: 'place',
     regionId: 'smolensk-oblast',
+    categoryId: 'places-tire-services',
     title: 'Мотошиномонтаж',
     description: 'Замена резины, давление и балансировка.',
     services: ['шиномонтаж', 'резина'],
     tags: ['шиномонтаж', 'резина', 'tire'],
     searchKeywords: ['резина', 'шины', 'моторезина', 'поменять резину', 'переобуть мотоцикл'],
+  },
+  {
+    id: 'rolling-moto-service-smolensk',
+    type: 'place',
+    regionId: 'smolensk-oblast',
+    categoryId: 'places-services',
+    title: 'Rolling Moto — сервис и обслуживание',
+    description: 'Сервисная карточка Rolling Moto для обслуживания и консультаций по мотоциклу.',
+    services: ['консультация по обслуживанию', 'запчасти и расходники'],
+    tags: ['сервис', 'обслуживание', 'то', 'rolling moto', 'ремонт', 'масло'],
+    searchKeywords: [],
+  },
+  {
+    id: 'parts-shop',
+    type: 'place',
+    regionId: 'smolensk-oblast',
+    categoryId: 'moto-shops',
+    title: 'Магазин запчастей',
+    description: 'Магазин экипировки, запчастей и расходников.',
+    services: ['экипировка', 'запчасти'],
+    tags: ['магазин', 'запчасти'],
+    searchKeywords: [],
   },
   {
     id: 'tire-pressure',
@@ -65,10 +88,23 @@ const items = [
 
 const synonyms = {
   резина: ['шина', 'шины', 'колесо', 'колеса', 'шиномонтаж', 'моторезина'],
+  шиномонтаж: ['резина', 'шины', 'колеса', 'переобуть'],
+  мотошиномонтаж: ['шиномонтаж', 'резина', 'шины', 'колеса', 'переобуть'],
   экипировка: ['шлем', 'перчатки', 'куртка', 'боты', 'защита'],
   маршрут: ['поездка', 'куда', 'route'],
   тренировка: ['практика', 'упражнения', 'площадка'],
   страховка: ['осаго', 'документы'],
+  сервис: ['мотосервис', 'мотосервисы', 'ремонт', 'то', 'масло', 'обслуживание'],
+  мотосервис: ['мотосервисы', 'сервис', 'ремонт', 'то', 'обслуживание', 'диагностика'],
+  мотосервисы: ['мотосервис', 'сервис', 'ремонт', 'то', 'обслуживание', 'диагностика'],
+  магазин: ['мотомагазин', 'экипировка', 'запчасти', 'расходники'],
+  мотомагазин: ['магазин', 'экипировка', 'запчасти', 'расходники'],
+};
+
+const categoryAliases = {
+  'places-services': ['мотосервис', 'мотосервисы', 'сервис', 'ремонт', 'обслуживание', 'то', 'диагностика'],
+  'places-tire-services': ['шиномонтаж', 'мотошиномонтаж', 'резина', 'шины', 'переобуть'],
+  'moto-shops': ['магазин', 'мотомагазин', 'экипировка', 'запчасти', 'расходники'],
 };
 
 function normalize(value) {
@@ -111,7 +147,7 @@ function search(query, { regionId = 'smolensk-oblast', type = 'all' } = {}) {
       const description = normalize(item.description);
       const services = normalize(item.services.join(' '));
       const tags = normalize(item.tags.join(' '));
-      const keywords = normalize(item.searchKeywords.join(' '));
+      const keywords = normalize([...item.searchKeywords, ...(categoryAliases[item.categoryId] ?? [])].join(' '));
       const score = tokens.reduce((sum, token) => (
         sum +
         scoreField(title, token, 30, 18) +
@@ -135,6 +171,13 @@ assert.equal(search('резина').includes('city-fear'), false);
 assert.equal(search('перчатки')[0], 'gear-gloves');
 assert.equal(search('марш')[0], 'route-evening');
 assert.equal(search('город')[0], 'city-fear');
+assert.equal(search('мотосервис')[0], 'rolling-moto-service-smolensk');
+assert.equal(search('мотосервисы').includes('rolling-moto-service-smolensk'), true);
+assert.equal(search('шиномонтаж')[0], 'tires');
+assert.equal(search('мотошиномонтаж')[0], 'tires');
+assert.equal(search('магазин').includes('parts-shop'), true);
+assert.equal(search('мотомагазин').includes('parts-shop'), true);
+assert.equal(search('Rolling Moto').includes('rolling-moto-service-smolensk'), true);
 assert.equal(search('сервис', { regionId: 'moscow' })[0], 'other-region');
 assert.equal(search('сервис', { regionId: 'smolensk-oblast' }).includes('other-region'), false);
 assert.equal(search('совсемнетакогозапроса').length, 0);

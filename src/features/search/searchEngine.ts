@@ -52,6 +52,7 @@ const synonyms: Record<string, string[]> = {
   резина: ['шина', 'шины', 'колесо', 'колеса', 'шиномонтаж', 'моторезина', 'tires', 'tyres'],
   шина: ['резина', 'шины', 'шиномонтаж', 'моторезина', 'tires'],
   шиномонтаж: ['резина', 'шины', 'колеса', 'переобуть', 'tire service'],
+  мотошиномонтаж: ['шиномонтаж', 'резина', 'шины', 'колеса', 'переобуть', 'tire service'],
   масло: ['замена масла', 'то', 'обслуживание', 'расходники', 'oil'],
   экипировка: ['шлем', 'перчатки', 'куртка', 'боты', 'защита', 'gear', 'helmet'],
   шлем: ['экипировка', 'helmet', 'защита'],
@@ -60,11 +61,41 @@ const synonyms: Record<string, string[]> = {
   сегодня: ['вечером', 'событие', 'маршрут', 'today'],
   тренировка: ['практика', 'упражнения', 'площадка', 'школа', 'инструктор', 'training', 'practice'],
   страховка: ['осаго', 'документы', 'insurance'],
-  сервис: ['ремонт', 'то', 'масло', 'service', 'repair'],
+  сервис: ['мотосервис', 'мотосервисы', 'ремонт', 'то', 'масло', 'обслуживание', 'service', 'repair'],
+  мотосервис: ['мотосервисы', 'сервис', 'ремонт', 'то', 'обслуживание', 'диагностика', 'service', 'repair'],
+  мотосервисы: ['мотосервис', 'сервис', 'ремонт', 'то', 'обслуживание', 'диагностика', 'service', 'repair'],
   эндуро: ['эндуро броня', 'экипировка', 'защита', 'enduro'],
   цепь: ['смазка', 'звезды', 'натяжение', 'chain'],
   давление: ['шины', 'резина', 'манометр', 'pressure'],
-  запчасти: ['расходники', 'мотомагазин', 'parts'],
+  запчасти: ['расходники', 'мотомагазин', 'магазин', 'parts'],
+  магазин: ['мотомагазин', 'экипировка', 'запчасти', 'расходники', 'shop'],
+  мотомагазин: ['магазин', 'экипировка', 'запчасти', 'расходники', 'shop'],
+};
+
+const placeCategoryAliases: Record<string, LocalizedText[]> = {
+  'places-services': [
+    { ru: 'мотосервис', en: 'motorcycle service' },
+    { ru: 'мотосервисы', en: 'motorcycle services' },
+    { ru: 'сервис', en: 'service' },
+    { ru: 'ремонт', en: 'repair' },
+    { ru: 'обслуживание', en: 'maintenance' },
+    { ru: 'то', en: 'maintenance' },
+    { ru: 'диагностика', en: 'diagnostics' },
+  ],
+  'places-tire-services': [
+    { ru: 'шиномонтаж', en: 'tire fitting' },
+    { ru: 'мотошиномонтаж', en: 'motorcycle tire fitting' },
+    { ru: 'резина', en: 'tires' },
+    { ru: 'шины', en: 'tires' },
+    { ru: 'переобуть', en: 'change tires' },
+  ],
+  'moto-shops': [
+    { ru: 'магазин', en: 'shop' },
+    { ru: 'мотомагазин', en: 'motorcycle shop' },
+    { ru: 'экипировка', en: 'gear' },
+    { ru: 'запчасти', en: 'parts' },
+    { ru: 'расходники', en: 'consumables' },
+  ],
 };
 
 const guideSearchKeywordsById: Record<string, LocalizedText[]> = {
@@ -238,19 +269,25 @@ function entityText(item: SearchEntity, language: GuestLanguage) {
   const title = getLocalizedText(item.title, language);
   const description = getLocalizedText(item.description, language);
   const services = 'services' in item ? item.services?.map((service) => getLocalizedText(service, language)).join(' ') ?? '' : '';
+  const structuredServices = 'structuredServices' in item && Array.isArray(item.structuredServices)
+    ? item.structuredServices.map((service) => getLocalizedText(service.title, language)).join(' ')
+    : '';
   const branches = 'branches' in item && Array.isArray(item.branches)
     ? item.branches as { address: LocalizedText }[]
     : [];
   const addresses = branches.map((branch) => getLocalizedText(branch.address, language)).join(' ');
   const keywords = item.searchKeywords?.map((keyword) => getLocalizedText(keyword, language)).join(' ') ?? '';
+  const categoryAliases = 'categoryId' in item
+    ? placeCategoryAliases[String(item.categoryId)]?.map((alias) => getLocalizedText(alias, language)).join(' ') ?? ''
+    : '';
 
   return {
     title: normalizeSearchText(title),
     description: normalizeSearchText(description),
-    services: normalizeSearchText(services),
+    services: normalizeSearchText(`${services} ${structuredServices}`),
     addresses: normalizeSearchText(addresses),
     tags: normalizeSearchText(item.tags.join(' ')),
-    keywords: normalizeSearchText(keywords),
+    keywords: normalizeSearchText(`${keywords} ${categoryAliases}`),
   };
 }
 
