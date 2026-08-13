@@ -1,215 +1,194 @@
-﻿import {
-  Bell,
-  BookOpen,
-  Download,
-  ChevronRight,
-  Gauge,
-  GraduationCap,
-  Map,
-  MapPin,
-  MapPinned,
-  Search,
-  ShieldCheck,
-  ShoppingBag,
-  UserRound,
-  UsersRound,
-  Wrench,
-} from 'lucide-react';
+import { GraduationCap, MapPinned, MapPin, Mic, Search, ShieldCheck, ShoppingBag, Umbrella, Wrench } from 'lucide-react';
 import { FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { appCategories } from '../../data/categories';
+import { getPlacePrimaryBranch, type PlaceItem } from '../../data/places';
+import type { SearchCategory } from '../../data/searchContent';
 import { getRegionLabel } from '../../data/regions';
-import { searchMotohub } from '../../features/search/searchEngine';
+import { useBackendContent } from '../../shared/content/backendContent';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
-import { InstallManualSheet } from '../../shared/pwa/InstallManualSheet';
 import { useInstallPrompt } from '../../shared/pwa/useInstallPrompt';
 import { useGuestSettings } from '../../shared/storage/guestSettings';
+import { ImageWithFallback } from '../../shared/ui/ImageWithFallback';
 
-const quickFindItems = [
-  { title: 'Шиномонтаж', category: 'places-tire-services', query: 'поменять резину', icon: Gauge },
-  { title: 'Мотосервисы', category: 'places-services', query: 'мотосервис', icon: Wrench },
-  { title: 'Магазины', category: 'moto-shops', query: 'купить экипировку', icon: ShoppingBag },
-  { title: 'Страховка', category: 'places-insurance', query: 'страховка', icon: ShieldCheck },
-  { title: 'Обучение', category: 'places-schools-instructors', query: 'обучение', icon: GraduationCap },
-  { title: 'Все места', type: 'place', query: '', icon: MapPin },
+interface QuickFindItem {
+  title: string;
+  icon: typeof Wrench;
+  query?: string;
+  category?: SearchCategory;
+  type?: 'place';
+}
+
+
+const physicalHomeCategoryRank: Record<string, number> = {
+  'places-tire-services': 0,
+  'places-services': 1,
+  'moto-shops': 2,
+  'places-fuel': 3,
+  'places-insurance': 4,
+  'places-storage': 5,
+};
+
+function getPhysicalHomeRank(place: PlaceItem) {
+  return physicalHomeCategoryRank[place.categoryId] ?? 20;
+}
+const quickFindItems: QuickFindItem[] = [
+  { title: 'Шиномонтаж', icon: Wrench, query: 'шиномонтаж', category: 'service', type: 'place' },
+  { title: 'Мотосервисы', icon: Wrench, query: 'мотосервис', category: 'service', type: 'place' },
+  { title: 'Магазины', icon: ShoppingBag, query: 'экипировка', category: 'equipment', type: 'place' },
+  { title: 'Страховка', icon: Umbrella, query: 'страховка', category: 'insurance', type: 'place' },
+  { title: 'Обучение', icon: GraduationCap, query: 'обучение', category: 'training', type: 'place' },
+  { title: 'Все места', icon: MapPinned, type: 'place' },
 ];
 
-const homeSections = [
-  {
-    title: 'Места',
-    description: 'Сервисы, магазины, шиномонтажи и полезные точки рядом.',
-    to: '/sections/places',
-    icon: MapPin,
-    tone: 'orange',
-  },
-  {
-    title: 'Полезно знать',
-    description: 'Короткие ответы про обслуживание, экипировку и первый сезон.',
-    to: '/sections/guides',
-    icon: BookOpen,
-    tone: 'amber',
-  },
-  {
-    title: 'Маршруты и места',
-    description: 'Идеи поездок, направления и спокойные маршруты.',
-    to: '/sections/routes',
-    icon: MapPinned,
-    tone: 'green',
-  },
-  {
-    title: 'События и сообщество',
-    description: 'Встречи, тренировки, выезды и мото-жизнь рядом.',
-    to: '/sections/community',
-    icon: UsersRound,
-    tone: 'blue',
-  },
-  {
-    title: 'Навыки и безопасность',
-    description: 'Практика, городская езда и уверенное развитие без лишней теории.',
-    to: '/sections/skills',
-    icon: ShieldCheck,
-    tone: 'red',
-    wide: true,
-  },
-];
+function getCategoryTitle(place: PlaceItem, language: 'ru' | 'en') {
+  const category = appCategories.find((item) => item.id === place.categoryId);
+  return category ? getLocalizedText(category.title, language) : 'Место';
+}
+
+function getPlaceAddress(place: PlaceItem, language: 'ru' | 'en') {
+  const branch = getPlacePrimaryBranch(place);
+  return branch?.address ? getLocalizedText(branch.address, language) : 'Смоленск и область';
+}
+
+function getPlaceStatus(place: PlaceItem) {
+  if (place.verificationStatus === 'verified_mg67' || place.verificationStatus === 'confirmed') return 'Открыто';
+  return 'Проверить перед выездом';
+}
+
+function getMapPinStyle(place: PlaceItem) {
+  const coordinates = place.coordinates;
+  if (!coordinates) return { left: '50%', top: '50%' };
+  const [lng, lat] = coordinates;
+  const left = Math.max(12, Math.min(88, ((lng - 31.86) / 0.48) * 100));
+  const top = Math.max(12, Math.min(88, ((54.9 - lat) / 0.34) * 100));
+  return { left: `${left}%`, top: `${top}%` };
+}
 
 export function HomePage() {
-  const settings = useGuestSettings();
-  const { language, t } = useI18n();
   const navigate = useNavigate();
+  const { language } = useI18n();
+  const settings = useGuestSettings();
   const installPrompt = useInstallPrompt();
+  const backendContent = useBackendContent();
   const [query, setQuery] = useState('');
-  const [showInstallSheet, setShowInstallSheet] = useState(false);
-  const savedRegion = getRegionLabel(settings.regionId);
-  const suggestions = useMemo(() => {
-    if (query.trim().length < 2) return [];
-    return searchMotohub({ query, regionId: settings.regionId, language }).slice(0, 4);
-  }, [language, query, settings.regionId]);
+  const region = getRegionLabel(settings.regionId);
 
-  function openSearch(params: { q?: string; type?: string; category?: string; date?: string; featured?: boolean }) {
-    const next = new URLSearchParams();
-    if (params.q) next.set('q', params.q);
-    if (params.type && params.type !== 'all') next.set('type', params.type);
-    if (params.category) next.set('category', params.category);
-    if (params.date) next.set('date', params.date);
-    if (params.featured) next.set('featured', 'true');
-    navigate(`/search?${next.toString()}`);
+  const publishedPlaces = useMemo(() => backendContent.places
+    .filter((place) => place.mapVisibility !== false)
+    .sort((a, b) => getPhysicalHomeRank(a) - getPhysicalHomeRank(b) || Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || getLocalizedText(a.name, language).localeCompare(getLocalizedText(b.name, language))),
+  [backendContent.places, language]);
+  const nearbyPlaces = publishedPlaces.slice(0, 3);
+  const mapPlaces = publishedPlaces.filter((place) => place.coordinates).slice(0, 8);
+
+  function openSearch(item: QuickFindItem) {
+    const params = new URLSearchParams();
+    if (item.query) params.set('q', item.query);
+    if (item.category) params.set('category', item.category);
+    params.set('type', 'place');
+    navigate(`/search?${params.toString()}`);
   }
 
   function submitSearch(event: FormEvent) {
     event.preventDefault();
-    openSearch({ q: query.trim() });
+    const params = new URLSearchParams();
+    if (query.trim()) params.set('q', query.trim());
+    params.set('type', 'place');
+    navigate(`/search?${params.toString()}`);
   }
 
   return (
-    <section className="motohub-screen">
-      <header className="motohub-hero home-hero">
-        <div className="motohub-topbar">
-          <div className="motohub-brand-wrap">
-            <Link className="motohub-logo" to="/search" aria-label="МотоГде">
-              <img className="motohub-logo__image motohub-logo__image--dark" src="/assets/brand/motogde-logo-dark.png" alt="МотоГде" />
-              <img className="motohub-logo__image motohub-logo__image--light" src="/assets/brand/motogde-logo-light.png" alt="МотоГде" />
-            </Link>
-            <Link className="motohub-location" to="/region">
-              <MapPin size={16} aria-hidden="true" />
-              <span>{savedRegion}</span>
-              <ChevronRight size={15} aria-hidden="true" />
-            </Link>
-          </div>
-
-          <div className="motohub-actions">
-            <Link className="round-action" to="/notifications" aria-label={t('home.notificationsLabel')}>
-              <Bell size={20} aria-hidden="true" />
-            </Link>
-            <Link className="round-action" to="/profile" aria-label={t('home.profileLabel')}>
-              <UserRound size={21} aria-hidden="true" />
-            </Link>
-          </div>
+    <section className="motohub-screen public-ui-v2 public-home-screen">
+      <header className="motohub-hero public-home-hero">
+        <div className="motohub-topbar public-home-topbar">
+          <Link className="motohub-logo" to="/search" aria-label="МотоГде">
+            <img className="motohub-logo__image motohub-logo__image--dark" src="/assets/brand/motogde-logo-dark.png" alt="МотоГде" />
+            <img className="motohub-logo__image motohub-logo__image--light" src="/assets/brand/motogde-logo-light.png" alt="МотоГде" />
+          </Link>
+          <Link className="motohub-location" to="/region">
+            <MapPin size={15} aria-hidden="true" />
+            <span>{region}</span>
+          </Link>
         </div>
 
-        <div className="motohub-hero-copy">
-          <h1>Что вам нужно?</h1>
-          <p>Найдем проверенное мотоместо в Смоленске.</p>
+        <div className="motohub-hero-copy public-home-copy">
+          <h1>Что нужно найти?</h1>
         </div>
 
-        <form className="motohub-search" onSubmit={submitSearch}>
-          <Search size={22} aria-hidden="true" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: поменять резину" />
+        <form className="motohub-search public-home-search" onSubmit={submitSearch}>
+          <Search size={20} aria-hidden="true" />
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: шиномонтаж, сервис, масло..." />
+          <button type="submit" aria-label="Найти"><Mic size={18} aria-hidden="true" /></button>
         </form>
-        {suggestions.length ? (
-          <div className="home-search-suggestions">
-            {suggestions.map(({ item }) => {
-              const title = getLocalizedText(item.title, language);
-              return (
-                <button type="button" key={item.id} onClick={() => openSearch({ q: query })}>
-                  <Search size={15} aria-hidden="true" />
-                  <span>{title}</span>
-                  <small>{getLocalizedText(item.description, language)}</small>
-                </button>
-              );
-            })}
-            <button className="home-search-suggestions__all" type="button" onClick={() => openSearch({ q: query })}>
-              {t('search.submit')}
-              <ChevronRight size={16} aria-hidden="true" />
-            </button>
-          </div>
-        ) : null}
       </header>
 
-      <main className="motohub-content home-content">
-        <section className="motohub-section home-quick-section">
-          <h2>Быстро найти</h2>
-          <div className="quick-find-grid" aria-label="Быстрые категории поиска">
-            {quickFindItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <button className="quick-find-card" key={item.title} type="button" onClick={() => openSearch({ q: item.query, type: item.type, category: item.category })}>
-                  <Icon size={22} strokeWidth={2.1} aria-hidden="true" />
-                  <span>{item.title}</span>
-                </button>
-              );
-            })}
-          </div>
+      <main className="home-content public-home-content">
+        <section className="quick-find-grid public-quick-grid" aria-label="Быстрый доступ">
+          {quickFindItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button className="quick-find-card public-quick-card" type="button" key={item.title} onClick={() => openSearch(item)}>
+                <Icon size={25} aria-hidden="true" />
+                <span>{item.title}</span>
+              </button>
+            );
+          })}
         </section>
-        {installPrompt.canShowInstallUi ? (
-          <button className="home-install-card" type="button" onClick={() => installPrompt.canNativeInstall ? void installPrompt.install() : setShowInstallSheet(true)}>
-            <img src="/assets/brand/pwa-192x192.png" alt="" aria-hidden="true" />
-            <span>
-              <strong>МотоГде всегда под рукой</strong>
-              <small>Установите приложение на телефон — быстрый запуск с главного экрана.</small>
-            </span>
-            <b><Download size={16} aria-hidden="true" />Установить</b>
-          </button>
-        ) : null}
 
-        <Link className="map-shortcut-card" to="/map">
-          <span><Map size={20} aria-hidden="true" /></span>
-          <strong>Показать места на карте</strong>
-          <ChevronRight size={18} aria-hidden="true" />
-        </Link>
-
-
-        <section className="motohub-section">
-          <h2>Всё для мотоциклиста</h2>
-          <div className="sections-home-grid">
-            {homeSections.map((section) => {
-              const Icon = section.icon;
+        <section className="home-nearby-section">
+          <div className="home-section-heading">
+            <h2>Рядом сейчас</h2>
+            <Link to="/map">Смотреть все</Link>
+          </div>
+          <div className="home-nearby-grid">
+            {nearbyPlaces.map((place) => {
+              const title = getLocalizedText(place.name, language);
               return (
-                <Link className={`section-home-card section-home-card--${section.tone}${section.wide ? ' section-home-card--wide' : ''}`} to={section.to} key={section.title}>
-                  <span><Icon size={22} strokeWidth={2.1} aria-hidden="true" /></span>
-                  <strong>{section.title}</strong>
-                  <small>{section.description}</small>
-                  <ChevronRight size={17} aria-hidden="true" />
+                <Link className="home-place-card" to={`/place/${place.id}`} key={place.id}>
+                  <span className="home-place-card__media">
+                    <ImageWithFallback src={place.coverImage ?? place.image} alt={title} />
+                    <b>{getPlaceStatus(place)}</b>
+                  </span>
+                  <span className="home-place-card__body">
+                    <strong>{title}</strong>
+                    <small>{getCategoryTitle(place, language)}</small>
+                    <span>{getPlaceAddress(place, language)}</span>
+                  </span>
                 </Link>
               );
             })}
           </div>
         </section>
+
+        <section className="home-map-preview">
+          <div className="home-map-preview__canvas" aria-hidden="true">
+            {mapPlaces.map((place, index) => <span className="home-map-preview__pin" style={getMapPinStyle(place)} key={place.id}>{index + 1}</span>)}
+          </div>
+          <div className="home-map-preview__content">
+            <span>Карта МотоГде</span>
+            <h2>Места на карте Смоленска</h2>
+            <p>Сервисы, магазины, шиномонтажи и точки для райдеров в одном экране.</p>
+            <Link to="/map">Смотреть на карте</Link>
+          </div>
+        </section>
+
+        {installPrompt.canShowInstallUi ? (
+          <section className="home-install-card public-install-card">
+            <img src="/assets/brand/pwa-192x192.png" alt="" aria-hidden="true" />
+            <div>
+              <strong>Установить МотоГде</strong>
+              <span>Открывайте сервис с иконки, как обычное приложение.</span>
+            </div>
+            <Link to="/install">Установить</Link>
+          </section>
+        ) : null}
+
+        <section className="home-source-note">
+          <ShieldCheck size={17} aria-hidden="true" />
+          <span>Если геолокация недоступна, показываем места выбранного региона.</span>
+        </section>
       </main>
-      {showInstallSheet ? <InstallManualSheet kind={installPrompt.manualKind} onClose={() => setShowInstallSheet(false)} onCopyLink={installPrompt.copyInstallLink} /> : null}
     </section>
   );
 }
-
-
-

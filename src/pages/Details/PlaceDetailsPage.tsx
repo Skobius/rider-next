@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, ChevronDown, ExternalLink, Heart, MapPin, Phone, Share2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronDown, ExternalLink, Globe2, Heart, MapPin, Navigation, Phone, Share2, ShieldCheck } from 'lucide-react';
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { appCategories } from '../../data/categories';
@@ -26,16 +26,16 @@ function uniqueItems(items: string[]) {
 }
 
 function getActuality(status: PlaceItem['verificationStatus']) {
-  if (status === 'verified_mg67') return { tone: 'good', label: 'Актуально', source: 'проверено командой МотоГде' };
-  if (status === 'confirmed') return { tone: 'good', label: 'Актуально', source: 'подтверждено владельцем' };
-  if (status === 'community') return { tone: 'warn', label: 'Стоит уточнить', source: 'подтверждено посетителями' };
-  return { tone: 'warn', label: 'Стоит уточнить', source: 'проверяется командой МотоГде' };
+  if (status === 'verified_mg67') return { tone: 'good', label: 'Проверено', source: 'проверено командой МотоГде' };
+  if (status === 'confirmed') return { tone: 'good', label: 'Проверено', source: 'подтверждено владельцем' };
+  if (status === 'community') return { tone: 'warn', label: 'Есть сигналы', source: 'подтверждено посетителями' };
+  return { tone: 'warn', label: 'Уточняется', source: 'проверяется командой МотоГде' };
 }
 
 function getServiceStatus(service: PlaceStructuredService) {
   if (service.availability === 'available') return 'Есть';
   if (service.availability === 'unavailable') return 'Не оказывает';
-  return 'Подробности уточняются';
+  return 'Уточняется';
 }
 
 export function PlaceDetailsPage() {
@@ -55,7 +55,7 @@ export function PlaceDetailsPage() {
   if (!place && !backendContent.loading) return <Navigate to="/sections/places" replace />;
   if (!place) {
     return (
-      <section className="motohub-screen simple-screen">
+      <section className="motohub-screen simple-screen public-ui-v2">
         <section className="empty-state"><h2>Загружаем карточку</h2><p>Секунду.</p></section>
       </section>
     );
@@ -74,6 +74,7 @@ export function PlaceDetailsPage() {
   const websiteContact = place.contacts.find((contact) => contact.type === 'website');
   const phone = primaryBranch?.phone ?? phoneContact?.value;
   const routeUrl = primaryBranch?.mapUrl ?? place.mapUrl;
+  const websiteUrl = websiteContact ? contactHref(websiteContact.type, websiteContact.value, websiteContact.url) : '';
   const isFavorite = favorites.some((favorite) => favorite.id === place.id && favorite.type === 'place');
   const structuredServices = place.structuredServices ?? [];
   const offeringLabels = uniqueItems([
@@ -81,10 +82,10 @@ export function PlaceDetailsPage() {
     ...(place.features ?? []).map((chip) => getLocalizedText(productLabels[chip] ?? { ru: chip, en: chip }, language)),
     ...(place.services?.map((service) => getLocalizedText(service, language)) ?? []),
   ]);
-  const hasUsefulOfferings = place.id !== 'rolling-moto-shop-smolensk' && offeringLabels.length > 0;
-  const visibleOfferings = showAllOfferings ? offeringLabels : offeringLabels.slice(0, 5);
+  const visibleOfferings = showAllOfferings ? offeringLabels : offeringLabels.slice(0, 8);
   const actuality = getActuality(place.verificationStatus);
-  const relatedGuides: { label: { ru: string; en: string }; to: string }[] = [];
+  const address = primaryBranch?.address ? getLocalizedText(primaryBranch.address, language) : 'Смоленск и область';
+  const schedule = primaryBranch?.schedule ? getLocalizedText(primaryBranch.schedule, language) : 'График лучше уточнить';
 
   async function sharePlace() {
     const currentPlace = place!;
@@ -100,8 +101,8 @@ export function PlaceDetailsPage() {
   }
 
   async function submitVisitReport(isOpen: boolean | null) {
-    if (!supabase || !user) return;
     const currentPlace = place!;
+    if (!supabase || !user) return;
     setVisitBusy(true);
     setVisitNotice('');
     const { error } = await supabase.from('visit_reports').insert({
@@ -130,93 +131,66 @@ export function PlaceDetailsPage() {
   }
 
   return (
-    <section className="motohub-screen simple-screen detail-screen place-detail-screen">
-      <button className="back-link detail-back-button" type="button" onClick={() => navigate(from)}>
-        <ArrowLeft size={18} aria-hidden="true" />
-        {t('details.back')}
-      </button>
-
-      <div className="place-detail-layout">
-        <article className="place-detail-main">
-          <section className="detail-hero-card place-hero-card">
-            <ImageWithFallback src={place.coverImage ?? place.image} alt={title} />
-          </section>
-
-          <section className="place-summary-card">
-            <div>
-              <span className="place-category-label">{categoryTitle}</span>
-              <h1>{title}</h1>
-              <p>{description}</p>
-            </div>
-            <button
-              type="button"
-              className={`place-favorite-button ${isFavorite ? 'is-active' : ''}`}
-              aria-label={t('home.favoriteAdd')}
-              onClick={() => {
-                const added = toggleFavorite({ id: place.id, type: 'place', title, description });
-                showToast(added ? t('favorites.addedToast') : t('favorites.removedToast'));
-              }}
-            >
-              <Heart size={18} aria-hidden="true" />
-            </button>
-          </section>
-
-          <section className="place-status-row">
-            <span className={`actuality-pill actuality-pill--${actuality.tone}`}>
-              <ShieldCheck size={14} aria-hidden="true" />
-              {actuality.label}{place.informationCheckedAt ? ` · проверено ${place.informationCheckedAt}` : ''}
+    <section className="motohub-screen simple-screen detail-screen place-detail-screen public-ui-v2 public-place-screen">
+      <article className="place-detail-main public-place-card">
+        <section className="detail-hero-card place-hero-card public-place-photo">
+          <ImageWithFallback src={place.coverImage ?? place.image} alt={title} />
+          <div className="place-hero-actions">
+            <button type="button" onClick={() => navigate(from)} aria-label={t('details.back')}><ArrowLeft size={20} aria-hidden="true" /></button>
+            <span>
+              <button
+                type="button"
+                className={isFavorite ? 'is-active' : ''}
+                aria-label={t('home.favoriteAdd')}
+                onClick={() => {
+                  const added = toggleFavorite({ id: place.id, type: 'place', title, description });
+                  showToast(added ? t('favorites.addedToast') : t('favorites.removedToast'));
+                }}
+              >
+                <Heart size={19} aria-hidden="true" />
+              </button>
+              <button type="button" onClick={() => void sharePlace()} aria-label="Поделиться"><Share2 size={19} aria-hidden="true" /></button>
             </span>
-            <small>{actuality.source}</small>
-          </section>
+          </div>
+        </section>
 
-          <section className="detail-info-grid place-info-compact">
-            {primaryBranch?.address ? <div><span>{t('places.address')}</span><strong>{getLocalizedText(primaryBranch.address, language)}</strong></div> : null}
-            {primaryBranch?.schedule ? <div><span>{t('places.schedule')}</span><strong>{getLocalizedText(primaryBranch.schedule, language)}</strong></div> : null}
-            {phone ? <div><span>{t('places.phone')}</span><strong>{phone}</strong></div> : null}
-          </section>
-
-          <section className="place-action-panel">
-            {phone ? <a href={`tel:${phone}`}><Phone size={18} /> {t('places.call')}</a> : null}
-            {routeUrl ? <a href={routeUrl} target="_blank" rel="noreferrer"><MapPin size={18} /> {t('places.route')}</a> : null}
-            <button type="button" onClick={() => void sharePlace()}><Share2 size={18} /> Поделиться</button>
-          </section>
-
-          {websiteContact ? (
-            <div className="place-secondary-links">
-              <a href={contactHref(websiteContact.type, websiteContact.value, websiteContact.url)} target="_blank" rel="noreferrer">
-                Открыть сайт
-                <ExternalLink size={15} aria-hidden="true" />
-              </a>
+        <section className="place-summary-card public-place-summary">
+          <div>
+            <div className="place-title-row">
+              <h1>{title}</h1>
+              <span className={`actuality-pill actuality-pill--${actuality.tone}`}><ShieldCheck size={14} aria-hidden="true" />{actuality.label}</span>
             </div>
-          ) : null}
+            <p>{categoryTitle}</p>
+          </div>
+        </section>
 
-          {fullDescription ? (
-            <section className="detail-block place-about-block">
-              <span>{t('places.about')}</span>
-              <div className="place-description">
-                {fullDescription.split('\n\n').map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
-              </div>
-            </section>
-          ) : null}
+        <section className="place-primary-actions">
+          {phone ? <a href={`tel:${phone}`}><Phone size={20} aria-hidden="true" />Позвонить</a> : <span className="is-disabled"><Phone size={20} aria-hidden="true" />Позвонить</span>}
+          {routeUrl ? <a href={routeUrl} target="_blank" rel="noreferrer"><Navigation size={20} aria-hidden="true" />Маршрут</a> : <span className="is-disabled"><Navigation size={20} aria-hidden="true" />Маршрут</span>}
+          {websiteUrl ? <a href={websiteUrl} target="_blank" rel="noreferrer"><Globe2 size={20} aria-hidden="true" />Сайт</a> : <span className="is-disabled"><Globe2 size={20} aria-hidden="true" />Сайт</span>}
+        </section>
 
-          {hasUsefulOfferings ? (
-            <section className="detail-block">
-              <span>Товары и услуги</span>
-              <div className="chip-list">
+        <section className="place-info-sheet">
+          <div><MapPin size={18} aria-hidden="true" /><span><strong>{address}</strong><small>Текущий регион: Смоленск и область</small></span></div>
+          <div><ShieldCheck size={18} aria-hidden="true" /><span><strong>{schedule}</strong><small>{actuality.source}</small></span></div>
+          {phone ? <div><Phone size={18} aria-hidden="true" /><span><strong>{phone}</strong><small>Перед визитом лучше уточнить детали</small></span></div> : null}
+        </section>
+
+        {visibleOfferings.length || structuredServices.length ? (
+          <section className="detail-block public-detail-block public-services-block">
+            <span>Услуги</span>
+            {visibleOfferings.length ? (
+              <div className="chip-list public-chip-list">
                 {visibleOfferings.map((chip) => <span key={chip}>{chip}</span>)}
               </div>
-              {offeringLabels.length > 5 ? (
-                <button className="inline-more-button" type="button" onClick={() => setShowAllOfferings((value) => !value)}>
-                  {showAllOfferings ? 'Скрыть' : 'Показать всё'}
-                </button>
-              ) : null}
-            </section>
-          ) : null}
-
-          {structuredServices.length ? (
-            <section className="detail-block">
-              <span>Услуги</span>
-              <div className="structured-service-list">
+            ) : null}
+            {offeringLabels.length > 8 ? (
+              <button className="inline-more-button" type="button" onClick={() => setShowAllOfferings((value) => !value)}>
+                {showAllOfferings ? 'Скрыть' : 'Показать всё'}
+              </button>
+            ) : null}
+            {structuredServices.length ? (
+              <div className="structured-service-list public-structured-services">
                 {structuredServices.map((service) => (
                   <div key={service.id}>
                     <strong>{getLocalizedText(service.title, language)}</strong>
@@ -224,59 +198,56 @@ export function PlaceDetailsPage() {
                   </div>
                 ))}
               </div>
-            </section>
-          ) : null}
-
-          {place.mg67Comment ? (
-            <section className="soft-callout detail-mg67-callout">
-              <span>MG67</span>
-              <strong>{t('places.mg67Comment')}</strong>
-              <p>{getLocalizedText(place.mg67Comment, language)}</p>
-            </section>
-          ) : null}
-
-          {relatedGuides.length ? (
-            <section className="detail-block">
-              <span>{t('guides.relatedMaterials')}</span>
-              <div className="related-category-list">
-                {relatedGuides.map((guide) => (
-                  <Link to={guide.to} key={guide.to}>
-                    <strong>{getLocalizedText(guide.label, language)}</strong>
-                    <ExternalLink size={15} aria-hidden="true" />
-                  </Link>
-                ))}
-              </div>
-            </section>
-          ) : null}
-
-          <section className="soft-callout visit-report-card">
-            <CheckCircle2 size={22} aria-hidden="true" />
-            <div>
-              <strong>Были здесь недавно?</strong>
-              <p>Помогите проверить актуальность информации.</p>
-              <span className="admin-action-row visit-action-row">
-                <button type="button" disabled={visitBusy} onClick={() => handleVisitAction(true)}>Всё актуально</button>
-                <button type="button" disabled={visitBusy} onClick={() => handleVisitAction(false)}>Есть неточность</button>
-              </span>
-              {visitNotice ? <small>{visitNotice}</small> : null}
-            </div>
-          </section>
-
-          <section className="detail-disclosure">
-            <button type="button" onClick={() => setHelpOpen((value) => !value)}>
-              Помочь улучшить карточку
-              <ChevronDown size={17} aria-hidden="true" />
-            </button>
-            {helpOpen ? (
-              <div className="place-bottom-actions">
-                <Link to={`/feedback?category=correction&sourceType=place&sourceId=${place.id}&sourceTitle=${encodeURIComponent(title)}`}>{t('places.reportError')}</Link>
-                <Link to={`/feedback?category=idea&sourceType=place&sourceId=${place.id}&sourceTitle=${encodeURIComponent(title)}`}>{t('places.suggestCorrection')}</Link>
-                <Link to={`/profile/claims?placeId=${place.id}`}>Заявить права</Link>
-              </div>
             ) : null}
           </section>
-        </article>
-      </div>
+        ) : null}
+
+        {fullDescription ? (
+          <section className="detail-block public-detail-block place-about-block">
+            <span>О месте</span>
+            <div className="place-description">
+              {fullDescription.split('\n\n').map((paragraph) => <p key={paragraph}>{paragraph}</p>)}
+            </div>
+          </section>
+        ) : null}
+
+        {place.mg67Comment ? (
+          <section className="soft-callout detail-mg67-callout public-soft-callout">
+            <span>MG67</span>
+            <strong>{t('places.mg67Comment')}</strong>
+            <p>{getLocalizedText(place.mg67Comment, language)}</p>
+          </section>
+        ) : null}
+
+        <section className="soft-callout visit-report-card public-soft-callout">
+          <CheckCircle2 size={22} aria-hidden="true" />
+          <div>
+            <strong>Были здесь недавно?</strong>
+            <p>Помогите проверить актуальность информации.</p>
+            <span className="admin-action-row visit-action-row">
+              <button type="button" disabled={visitBusy} onClick={() => handleVisitAction(true)}>Всё актуально</button>
+              <button type="button" disabled={visitBusy} onClick={() => handleVisitAction(false)}>Есть неточность</button>
+            </span>
+            {visitNotice ? <small>{visitNotice}</small> : null}
+          </div>
+        </section>
+
+        <section className="detail-disclosure public-detail-disclosure">
+          <button type="button" onClick={() => setHelpOpen((value) => !value)}>
+            Помочь улучшить карточку
+            <ChevronDown size={17} aria-hidden="true" />
+          </button>
+          {helpOpen ? (
+            <div className="place-bottom-actions">
+              <Link to={`/feedback?category=correction&sourceType=place&sourceId=${place.id}&sourceTitle=${encodeURIComponent(title)}`}>{t('places.reportError')}</Link>
+              <Link to={`/feedback?category=idea&sourceType=place&sourceId=${place.id}&sourceTitle=${encodeURIComponent(title)}`}>{t('places.suggestCorrection')}</Link>
+              <Link to={`/profile/claims?placeId=${place.id}`}>Заявить права</Link>
+            </div>
+          ) : null}
+        </section>
+      </article>
     </section>
   );
 }
+
+
