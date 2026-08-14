@@ -1,21 +1,17 @@
 ﻿import {
   AppWindow,
   BarChart3,
-  Bell,
   ChevronRight,
   ClipboardList,
   Database,
   FileText,
-  Globe2,
   Heart,
   History,
   Info,
   Languages,
   Mail,
   MapPin,
-  MonitorSmartphone,
   Palette,
-  Settings2,
   ShieldCheck,
   Building2,
   LogOut,
@@ -30,7 +26,6 @@ import { useUserProfile } from '../shared/auth/useProfile';
 import { useUserRoles } from '../shared/auth/useUserRoles';
 import { useI18n } from '../shared/i18n/useI18n';
 import { useInstallPrompt } from '../shared/pwa/useInstallPrompt';
-import { useFavorites } from '../shared/storage/favoritesStore';
 import { useGuestSettings } from '../shared/storage/guestSettings';
 import { supabase } from '../shared/supabase/client';
 
@@ -42,30 +37,35 @@ interface ProfileMenuItem {
   icon: LucideIcon;
   to: string;
   isRegion?: boolean;
-  requires?: 'moderator' | 'admin' | 'superadmin';
+  requires?: 'user' | 'moderator' | 'admin' | 'superadmin';
 }
 
 interface ProfileMenuGroup {
-  titleKey: string;
-  requires?: 'moderator' | 'admin' | 'superadmin';
+  title: string;
+  requires?: 'user' | 'moderator' | 'admin' | 'superadmin';
   items: ProfileMenuItem[];
 }
 
 const groups: ProfileMenuGroup[] = [
   {
-    titleKey: 'profile.myMotohub',
+    title: 'Мой МотоГде',
     items: [
       { titleKey: 'profile.favoritesTitle', descriptionKey: 'profile.favoritesDescription', icon: Heart, to: '/favorites' },
-      { titleKey: 'profile.accountTitle', descriptionKey: 'profile.accountDescription', icon: UserRound, to: '/profile/account' },
-      { titleKey: 'profile.submissionsTitle', descriptionKey: 'profile.submissionsDescription', icon: FileText, to: '/profile/submissions' },
-      { titleKey: 'profile.claimsTitle', descriptionKey: 'profile.claimsDescription', icon: ShieldCheck, to: '/profile/claims' },
-      { titleKey: 'profile.organizationsTitle', descriptionKey: 'profile.organizationsDescription', icon: Building2, to: '/profile/organizations' },
+      { titleKey: 'profile.submissionsTitle', descriptionKey: 'profile.submissionsDescription', icon: FileText, to: '/profile/submissions', requires: 'user' },
       { titleKey: 'profile.regionTitle', descriptionKey: 'profile.regionDescription', icon: MapPin, to: '/region', isRegion: true },
       { titleKey: 'profile.installTitle', descriptionKey: 'profile.installDescription', icon: AppWindow, to: '/install' },
     ],
   },
   {
-    titleKey: 'profile.adminTools',
+    title: 'Для владельцев',
+    requires: 'user',
+    items: [
+      { titleKey: 'profile.claimsTitle', descriptionKey: 'profile.claimsDescription', icon: ShieldCheck, to: '/profile/claims' },
+      { titleKey: 'profile.organizationsTitle', descriptionKey: 'profile.organizationsDescription', icon: Building2, to: '/profile/organizations' },
+    ],
+  },
+  {
+    title: 'Управление',
     requires: 'moderator',
     items: [
       { titleKey: 'profile.moderationTitle', descriptionKey: 'profile.moderationDescription', icon: ClipboardList, to: '/moderation', requires: 'moderator' },
@@ -76,45 +76,38 @@ const groups: ProfileMenuGroup[] = [
     ],
   },
   {
-    titleKey: 'common.settings',
+    title: 'Настройки',
     items: [
+      { titleKey: 'profile.accountTitle', descriptionKey: 'profile.accountDescription', icon: UserRound, to: '/profile/account', requires: 'user' },
       { titleKey: 'profile.languageTitle', descriptionKey: 'profile.languageDescription', icon: Languages, to: '/settings/language' },
       { titleKey: 'profile.themeTitle', descriptionKey: 'profile.themeDescription', icon: Palette, to: '/settings/theme' },
-      { titleKey: 'profile.notificationsTitle', descriptionKey: 'profile.notificationsDescription', icon: Bell, to: '/settings/notifications' },
-      { titleKey: 'profile.behaviorTitle', descriptionKey: 'profile.behaviorDescription', icon: Settings2, to: '/settings/behavior' },
     ],
   },
   {
-    titleKey: 'common.help',
+    title: 'Помощь',
     items: [
       { titleKey: 'profile.feedbackTitle', descriptionKey: 'profile.feedbackDescription', icon: Mail, to: '/feedback' },
       { titleKey: 'profile.aboutTitle', descriptionKey: 'profile.aboutDescription', icon: Info, to: '/about' },
-      { titleKey: 'profile.aboutMg67Title', descriptionKey: 'profile.aboutMg67Description', icon: ShieldCheck, to: '/about-mg67' },
-    ],
-  },
-  {
-    titleKey: 'common.system',
-    items: [
-      { titleKey: 'profile.privacyTitle', descriptionKey: 'profile.documentDraft', icon: FileText, to: '/privacy' },
-      { titleKey: 'profile.termsTitle', descriptionKey: 'profile.documentDraft', icon: FileText, to: '/terms' },
     ],
   },
 ];
 
 export function ProfilePage() {
   const settings = useGuestSettings();
-  const favorites = useFavorites();
   const installPrompt = useInstallPrompt();
   const { t } = useI18n();
   const { user, configured } = useAuthSession();
   const { profile } = useUserProfile();
   const roles = useUserRoles();
   const region = getRegionLabel(profile?.home_region_id ?? settings.regionId);
-  const displayName = profile?.display_name || user?.user_metadata?.display_name || user?.email || settings.displayName || t('profile.guestName');
+  const displayName = user
+    ? profile?.display_name || user.user_metadata?.display_name || user.email || settings.displayName || t('profile.guestName')
+    : 'Гостевой профиль';
   const installTitle = installPrompt.isInstalled ? 'МотоГде установлено' : 'Установить приложение';
   const installDescription = installPrompt.isInstalled ? 'Приложение уже добавлено на устройство' : t('profile.installDescription');
   const canSee = (required?: string) => {
     if (!required) return true;
+    if (required === 'user') return Boolean(user);
     if (required === 'moderator') return roles.isModerator;
     if (required === 'admin') return roles.isAdmin;
     if (required === 'superadmin') return roles.isSuperadmin;
@@ -124,9 +117,9 @@ export function ProfilePage() {
   return (
     <section className="motohub-screen simple-screen profile-screen">
       <header className="simple-screen__header">
-        <p>{t('common.profile')}</p>
-        <h1>{t('profile.title')}</h1>
-        <span>{t('profile.intro')}</span>
+        <p>МотоГде</p>
+        <h1>Профиль</h1>
+        <span>{user ? 'Настройки аккаунта и приложения.' : 'Настройки приложения и вход в аккаунт.'}</span>
       </header>
 
       <section className="profile-hero-card">
@@ -144,33 +137,15 @@ export function ProfilePage() {
           </button>
         ) : (
           <Link className="profile-primary-action" to="/auth">
-            {configured ? t('profile.signIn') : 'Подключить аккаунт'}
+            {configured ? 'Войти или зарегистрироваться' : 'Подключить аккаунт'}
           </Link>
         )}
-        <p>{user ? 'Аккаунт подключён через Supabase Auth.' : t('profile.signInHint')}</p>
-      </section>
-
-      <section className="profile-summary-grid" aria-label={t('profile.summaryLabel')}>
-        <div>
-          <Heart size={18} aria-hidden="true" />
-          <strong>{favorites.length}</strong>
-          <span>{t('profile.favoriteCount')}</span>
-        </div>
-        <div>
-          <Globe2 size={18} aria-hidden="true" />
-          <strong>{settings.language === 'ru' ? 'RU' : 'EN'}</strong>
-          <span>{t('profile.language')}</span>
-        </div>
-        <div>
-          <MonitorSmartphone size={18} aria-hidden="true" />
-          <strong>{installPrompt.isInstalled ? t('profile.installedYes') : installPrompt.canShowInstallUi ? t('profile.installAvailable') : 'PWA'}</strong>
-          <span>{t('profile.install')}</span>
-        </div>
+        <p>{user ? 'Аккаунт подключён.' : 'Можно пользоваться МотоГде без входа. Аккаунт нужен для предложений, избранного и будущей синхронизации.'}</p>
       </section>
 
       {groups.filter((group) => canSee(group.requires)).map((group) => (
-        <section className="profile-group" key={group.titleKey}>
-          <h2>{t(group.titleKey)}</h2>
+        <section className="profile-group" key={group.title}>
+          <h2>{group.title}</h2>
           <div className="settings-list">
             {group.items.filter((item) => canSee(item.requires)).map((item) => {
               const Icon = item.icon;

@@ -24,7 +24,7 @@ const storageKey = 'motohub.settings.v1';
 const defaultSettings: GuestSettings = {
   schemaVersion: 1,
   language: 'ru',
-  theme: 'dark',
+  theme: 'light',
   regionId: defaultRegionId,
   city: '',
   displayName: '',

@@ -27,6 +27,7 @@ const INTERACTIONS_KEY = 'motogde.install.interactions';
 let promptEvent: BeforeInstallPromptEvent | null = null;
 let installed = false;
 let initialized = false;
+let installCheckSettled = false;
 let lastOutcome: InstallSnapshot['lastOutcome'] = 'idle';
 const listeners = new Set<() => void>();
 let cachedSnapshot: InstallSnapshot | null = null;
@@ -42,15 +43,16 @@ function getStandalone() {
 }
 
 function getPlatform() {
-  if (!isBrowser()) return { ios: false, safari: false, yandexAndroid: false, installCapable: false };
+  if (!isBrowser()) return { ios: false, safari: false, yandexAndroid: false, chromeAndroid: false, installCapable: false };
   const ua = navigator.userAgent || '';
   const platform = navigator.platform || '';
   const touchMac = platform === 'MacIntel' && navigator.maxTouchPoints > 1;
   const ios = /iPad|iPhone|iPod/.test(ua) || touchMac;
   const safari = /^((?!CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser|Chrome|Android).)*Safari/i.test(ua);
   const yandexAndroid = /Android/i.test(ua) && /YaBrowser/i.test(ua);
+  const chromeAndroid = /Android/i.test(ua) && /Chrome/i.test(ua) && !yandexAndroid;
   const installCapable = 'serviceWorker' in navigator && window.isSecureContext;
-  return { ios, safari, yandexAndroid, installCapable };
+  return { ios, safari, yandexAndroid, chromeAndroid, installCapable };
 }
 
 function readNumber(key: string) {
@@ -84,9 +86,12 @@ function buildSnapshot(): InstallSnapshot {
     manualKind = platform.safari ? 'ios-safari' : 'ios-other';
   } else if (promptEvent) {
     status = 'native-install-available';
-  } else if (platform.installCapable) {
+  } else if (platform.yandexAndroid) {
     status = 'browser-manual-install';
-    manualKind = platform.yandexAndroid ? 'android-yandex' : 'browser';
+    manualKind = 'android-yandex';
+  } else if (platform.installCapable && installCheckSettled && !platform.chromeAndroid) {
+    status = 'browser-manual-install';
+    manualKind = 'browser';
   }
 
   return {
@@ -110,9 +115,15 @@ function initInstallController() {
     window.localStorage.setItem(VISITS_KEY, String(readNumber(VISITS_KEY) + 1));
   }
 
+  window.setTimeout(() => {
+    installCheckSettled = true;
+    notify();
+  }, 1800);
+
   const handleBeforeInstallPrompt = (event: Event) => {
     event.preventDefault();
     promptEvent = event as BeforeInstallPromptEvent;
+    installCheckSettled = true;
     lastOutcome = 'idle';
     notify();
   };

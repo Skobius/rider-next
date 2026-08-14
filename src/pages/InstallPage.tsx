@@ -15,6 +15,7 @@ export function InstallPage() {
   const installPrompt = useInstallPrompt();
   const { t } = useI18n();
   const [copied, setCopied] = useState(false);
+  const isCheckingInstall = !installPrompt.isInstalled && !installPrompt.canNativeInstall && installPrompt.status === 'unsupported';
 
   async function handleInstall() {
     if (installPrompt.canNativeInstall) {
@@ -44,8 +45,8 @@ export function InstallPage() {
       <section className="install-card">
         <img src="/assets/brand/pwa-192x192.png" alt="" aria-hidden="true" />
         <div>
-          <strong>{installPrompt.isInstalled ? 'МотоГде установлено' : installPrompt.canNativeInstall ? 'Установить в один клик' : getManualTitle(installPrompt.manualKind)}</strong>
-          <span>{installPrompt.isInstalled ? 'Приложение уже открыто как PWA.' : t('installPage.noStores')}</span>
+          <strong>{installPrompt.isInstalled ? 'МотоГде установлено' : installPrompt.canNativeInstall ? 'Установить в один клик' : isCheckingInstall ? 'Готовим установку' : getManualTitle(installPrompt.manualKind)}</strong>
+          <span>{installPrompt.isInstalled ? 'Приложение уже открыто как PWA.' : isCheckingInstall ? 'Проверяем, доступна ли установка в этом браузере.' : t('installPage.noStores')}</span>
         </div>
         {!installPrompt.isInstalled && installPrompt.canNativeInstall ? (
           <button className="profile-primary-action" type="button" onClick={handleInstall}>
@@ -55,7 +56,7 @@ export function InstallPage() {
         ) : null}
       </section>
 
-      {!installPrompt.isInstalled && !installPrompt.canNativeInstall ? (
+      {!installPrompt.isInstalled && !installPrompt.canNativeInstall && !isCheckingInstall ? (
         <section className="install-manual-card">
           <h2>{getManualTitle(installPrompt.manualKind)}</h2>
           {installPrompt.manualKind === 'ios-safari' ? (

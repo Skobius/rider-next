@@ -1,5 +1,5 @@
 import { GraduationCap, MapPinned, MapPin, Mic, Search, ShieldCheck, ShoppingBag, Umbrella, Wrench } from 'lucide-react';
-import { FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { appCategories } from '../../data/categories';
 import { getPlacePrimaryBranch, type PlaceItem } from '../../data/places';
@@ -20,7 +20,6 @@ interface QuickFindItem {
   type?: 'place';
 }
 
-
 const physicalHomeCategoryRank: Record<string, number> = {
   'places-tire-services': 0,
   'places-services': 1,
@@ -30,9 +29,6 @@ const physicalHomeCategoryRank: Record<string, number> = {
   'places-storage': 5,
 };
 
-function getPhysicalHomeRank(place: PlaceItem) {
-  return physicalHomeCategoryRank[place.categoryId] ?? 20;
-}
 const quickFindItems: QuickFindItem[] = [
   { title: 'Шиномонтаж', icon: Wrench, query: 'шиномонтаж', category: 'service', type: 'place' },
   { title: 'Мотосервисы', icon: Wrench, query: 'мотосервис', category: 'service', type: 'place' },
@@ -41,6 +37,10 @@ const quickFindItems: QuickFindItem[] = [
   { title: 'Обучение', icon: GraduationCap, query: 'обучение', category: 'training', type: 'place' },
   { title: 'Все места', icon: MapPinned, type: 'place' },
 ];
+
+function getPhysicalHomeRank(place: PlaceItem) {
+  return physicalHomeCategoryRank[place.categoryId] ?? 20;
+}
 
 function getCategoryTitle(place: PlaceItem, language: 'ru' | 'en') {
   const category = appCategories.find((item) => item.id === place.categoryId);
@@ -77,7 +77,9 @@ export function HomePage() {
 
   const publishedPlaces = useMemo(() => backendContent.places
     .filter((place) => place.mapVisibility !== false)
-    .sort((a, b) => getPhysicalHomeRank(a) - getPhysicalHomeRank(b) || Number(Boolean(b.featured)) - Number(Boolean(a.featured)) || getLocalizedText(a.name, language).localeCompare(getLocalizedText(b.name, language))),
+    .sort((a, b) => getPhysicalHomeRank(a) - getPhysicalHomeRank(b)
+      || Number(Boolean(b.featured)) - Number(Boolean(a.featured))
+      || getLocalizedText(a.name, language).localeCompare(getLocalizedText(b.name, language))),
   [backendContent.places, language]);
   const nearbyPlaces = publishedPlaces.slice(0, 3);
   const mapPlaces = publishedPlaces.filter((place) => place.coordinates).slice(0, 8);

@@ -1,5 +1,5 @@
 ﻿import { Bell, ChevronRight, Download, Layers3, Map, MapPin, Search, UserRound } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { getRegionLabel } from '../../data/regions';
 import { useAuthSession } from '../auth/useAuthSession';
@@ -44,10 +44,33 @@ export function AppShell() {
   const installPrompt = useInstallPrompt();
   const [softPromptClosed, setSoftPromptClosed] = useState(false);
   const [showInstallSheet, setShowInstallSheet] = useState(false);
-  const { needRefresh: [needRefresh], updateServiceWorker } = useRegisterSW({ immediate: true });
+  const [swRegistration, setSwRegistration] = useState<ServiceWorkerRegistration | null>(null);
+  const { needRefresh: [needRefresh, setNeedRefresh], updateServiceWorker } = useRegisterSW({
+    immediate: true,
+    onRegisteredSW(_swUrl, registration) {
+      setSwRegistration(registration ?? null);
+      void registration?.update();
+    },
+  });
   const pageTitle = getPageTitle(location.pathname);
   const region = getRegionLabel(settings.regionId);
   useFavoriteSync(user?.id);
+
+  useEffect(() => {
+    if (!swRegistration) return undefined;
+
+    const update = () => void swRegistration.update();
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') update();
+    };
+    const intervalId = window.setInterval(update, 60 * 60 * 1000);
+
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, [swRegistration]);
 
   return (
     <div className="motohub-app">
@@ -115,18 +138,24 @@ export function AppShell() {
             <strong>МотоГде можно установить как приложение</strong>
             <span>Быстрый запуск с главного экрана без магазина приложений.</span>
           </div>
-          <button className="install-soft-prompt__primary" type="button" onClick={() => installPrompt.canNativeInstall ? void installPrompt.install() : setShowInstallSheet(true)}>
-            Установить
-          </button>
-          <button className="install-soft-prompt__ghost" type="button" onClick={() => { installPrompt.dismissSoftPrompt(); setSoftPromptClosed(true); }}>
-            Не сейчас
-          </button>
+          <div className="install-soft-prompt__actions">
+            <button className="install-soft-prompt__primary" type="button" onClick={() => installPrompt.canNativeInstall ? void installPrompt.install() : setShowInstallSheet(true)}>
+              Установить
+            </button>
+            <button className="install-soft-prompt__ghost" type="button" onClick={() => { installPrompt.dismissSoftPrompt(); setSoftPromptClosed(true); }}>
+              Не сейчас
+            </button>
+          </div>
         </div>
       ) : null}
       {needRefresh ? (
         <div className="pwa-update-toast" role="status">
-          <span>Доступна новая версия МотоГде</span>
-          <button type="button" onClick={() => void updateServiceWorker(true)}>Обновить</button>
+          <div>
+            <strong>Доступна новая версия МотоГде</strong>
+            <span>Обновите приложение, чтобы получить последние изменения.</span>
+          </div>
+          <button className="pwa-update-toast__primary" type="button" onClick={() => void updateServiceWorker(true)}>Обновить</button>
+          <button className="pwa-update-toast__ghost" type="button" onClick={() => setNeedRefresh(false)}>Позже</button>
         </div>
       ) : null}
       {showInstallSheet ? <InstallManualSheet kind={installPrompt.manualKind} onClose={() => setShowInstallSheet(false)} onCopyLink={installPrompt.copyInstallLink} /> : null}

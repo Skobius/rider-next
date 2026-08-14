@@ -1,19 +1,49 @@
-import { ArrowLeft, CalendarDays, ChevronRight, Layers3 } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ChevronRight, GraduationCap, HelpCircle, Layers3, Route, ShieldCheck, ShoppingBag, Wrench } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useParams } from 'react-router-dom';
 import { getCategoryMaterialCountForRegion } from '../../data/categories';
 import { events } from '../../data/events';
 import { getRegionContentNotice, getRegionContentStatus, getRegionContentStatusText } from '../../data/regions';
 import { routes } from '../../data/routes';
-import { appSections, findSectionBySlug, getSectionCategories, getSectionMaterialCountForRegion, isRegionalSection } from '../../data/sections';
+import { appSections, findSectionBySlug, getSectionCategories, isRegionalSection } from '../../data/sections';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
 import { useGuestSettings } from '../../shared/storage/guestSettings';
 import { getContentIcon } from '../../shared/ui/contentIcons';
 import { ImageWithFallback } from '../../shared/ui/ImageWithFallback';
 
+const sectionGroups = [
+  {
+    title: 'Места',
+    description: 'Куда обратиться рядом: ремонт, резина, магазины и обучение.',
+    items: [
+      { title: 'Сервисы', description: 'Ремонт, ТО и диагностика', to: '/sections/places/services', icon: Wrench },
+      { title: 'Шиномонтаж', description: 'Замена резины и колёса', to: '/sections/places/tire-services', icon: Wrench },
+      { title: 'Магазины', description: 'Экипировка, запчасти, расходники', to: '/sections/places/moto-shops', icon: ShoppingBag },
+      { title: 'Страховка', description: 'ОСАГО и документы', to: '/sections/places/insurance-documents', icon: ShieldCheck },
+      { title: 'Обучение', description: 'Школы, инструкторы и площадки', to: '/sections/places/schools-instructors', icon: GraduationCap },
+    ],
+  },
+  {
+    title: 'Поездки',
+    description: 'Маршруты и события, когда хочется выбраться.',
+    items: [
+      { title: 'Маршруты', description: 'Идеи поездок по региону', to: '/sections/routes', icon: Route },
+      { title: 'События', description: 'Встречи и активности', to: '/sections/community', icon: CalendarDays },
+    ],
+  },
+  {
+    title: 'Полезное',
+    description: 'Короткие ответы и спокойное развитие навыков.',
+    items: [
+      { title: 'Гайды', description: 'Полезно знать без длинных статей', to: '/sections/guides', icon: HelpCircle },
+      { title: 'Навыки и безопасность', description: 'Практика, город и уверенность', to: '/sections/skills', icon: ShieldCheck },
+    ],
+  },
+];
+
 function SectionsIndex() {
-  const { language, t } = useI18n();
+  const { t } = useI18n();
   const settings = useGuestSettings();
   const regionStatus = getRegionContentStatus(settings.regionId);
   const regionNotice = getRegionContentNotice(regionStatus);
@@ -26,9 +56,9 @@ function SectionsIndex() {
       </Link>
 
       <header className="simple-screen__header">
-        <p>{t('sections.kicker')}</p>
-        <h1>{t('sections.title')}</h1>
-        <span>{t('sections.subtitle')}</span>
+        <p>МотоГде</p>
+        <h1>Разделы</h1>
+        <span>Всё полезное для мотоциклиста в одном месте.</span>
       </header>
 
       {regionNotice ? (
@@ -38,29 +68,29 @@ function SectionsIndex() {
         </section>
       ) : null}
 
-      <div className="sections-list">
-        {appSections.map((section) => {
-          const Icon = getContentIcon(section.icon);
-          const materialCount = getSectionMaterialCountForRegion(section, settings.regionId);
+      <div className="sections-directory">
+        {sectionGroups.map((group) => (
+          <section className="sections-directory-group" key={group.title}>
+            <header>
+              <h2>{group.title}</h2>
+              <p>{group.description}</p>
+            </header>
+            <div className="sections-directory-list">
+              {group.items.map((item) => {
+                const Icon = item.icon;
 
-          return (
-            <Link className="section-overview-card" to={`/sections/${section.slug}`} key={section.id}>
-              <div className="section-overview-card__media">
-                <ImageWithFallback src={section.image} alt={getLocalizedText(section.title, language)} />
-                <span><Icon size={24} aria-hidden="true" /></span>
-              </div>
-              <div className="section-overview-card__copy">
-                <h2>{getLocalizedText(section.title, language)}</h2>
-                <p>{getLocalizedText(section.description, language)}</p>
-                <div>
-                  <small><Layers3 size={14} /> {materialCount} {t('sections.materials')}</small>
-                  {section.status === 'filling' ? <b>{t('sections.filling')}</b> : null}
-                </div>
-              </div>
-              <ChevronRight size={20} aria-hidden="true" />
-            </Link>
-          );
-        })}
+                return (
+                  <Link className="section-directory-row" to={item.to} key={item.to}>
+                    <span><Icon size={19} aria-hidden="true" /></span>
+                    <strong>{item.title}</strong>
+                    <small>{item.description}</small>
+                    <ChevronRight size={18} aria-hidden="true" />
+                  </Link>
+                );
+              })}
+            </div>
+          </section>
+        ))}
       </div>
     </section>
   );
