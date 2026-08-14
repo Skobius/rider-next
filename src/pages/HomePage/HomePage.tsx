@@ -1,5 +1,5 @@
 import { GraduationCap, MapPinned, MapPin, Mic, Search, ShieldCheck, ShoppingBag, Umbrella, Wrench } from 'lucide-react';
-import { type FormEvent, useMemo, useState } from 'react';
+import { type FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { appCategories } from '../../data/categories';
 import { getPlacePrimaryBranch, type PlaceItem } from '../../data/places';
@@ -8,9 +8,11 @@ import { getRegionLabel } from '../../data/regions';
 import { useBackendContent } from '../../shared/content/backendContent';
 import { getLocalizedText } from '../../shared/i18n/localizedText';
 import { useI18n } from '../../shared/i18n/useI18n';
+import { getInitialLocation, loadYandexMaps, toYandexCoordinates, type YMapInstance } from '../../shared/maps/yandexMaps';
 import { useInstallPrompt } from '../../shared/pwa/useInstallPrompt';
 import { useGuestSettings } from '../../shared/storage/guestSettings';
 import { ImageWithFallback } from '../../shared/ui/ImageWithFallback';
+import { showToast } from '../../shared/ui/toastStore';
 
 interface QuickFindItem {
   title: string;
@@ -57,13 +59,70 @@ function getPlaceStatus(place: PlaceItem) {
   return 'Проверить перед выездом';
 }
 
-function getMapPinStyle(place: PlaceItem) {
-  const coordinates = place.coordinates;
-  if (!coordinates) return { left: '50%', top: '50%' };
-  const [lng, lat] = coordinates;
-  const left = Math.max(12, Math.min(88, ((lng - 31.86) / 0.48) * 100));
-  const top = Math.max(12, Math.min(88, ((54.9 - lat) / 0.34) * 100));
-  return { left: `${left}%`, top: `${top}%` };
+function HomeYandexPreview({ places, regionId }: { places: PlaceItem[]; regionId: string }) {
+  const nodeRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<YMapInstance | null>(null);
+  const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading');
+
+  useEffect(() => {
+    let alive = true;
+    setState('loading');
+
+    loadYandexMaps()
+      .then((ymaps) => {
+        if (!alive || !nodeRef.current) return;
+
+        const initialLocation = getInitialLocation(regionId);
+        const map = new ymaps.Map(nodeRef.current, {
+          center: toYandexCoordinates(initialLocation.center),
+          zoom: Math.max(10, initialLocation.zoom - 1),
+          controls: [],
+        });
+
+        map.behaviors?.disable(['scrollZoom']);
+        mapRef.current = map;
+        setState('ready');
+      })
+      .catch(() => {
+        if (alive) setState('error');
+      });
+
+    return () => {
+      alive = false;
+      mapRef.current?.destroy();
+      mapRef.current = null;
+    };
+  }, [regionId]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || state !== 'ready') return;
+
+    loadYandexMaps().then((ymaps) => {
+      map.geoObjects.removeAll();
+      places.forEach((place) => {
+        if (!place.coordinates) return;
+        map.geoObjects.add(new ymaps.Placemark(
+          toYandexCoordinates(place.coordinates),
+          { hintContent: getLocalizedText(place.name, 'ru') },
+          {
+            preset: 'islands#circleDotIcon',
+            iconColor: '#ff6418',
+            openBalloonOnClick: false,
+            openHintOnHover: true,
+          },
+        ));
+      });
+    });
+  }, [places, state]);
+
+  return (
+    <div className={`home-map-preview__canvas home-map-preview__canvas--${state}`}>
+      {state === 'loading' ? <span className="home-map-preview__state">Загружаем карту...</span> : null}
+      {state === 'error' ? <span className="home-map-preview__state">Карта временно недоступна</span> : null}
+      <div ref={nodeRef} className="home-map-preview__yandex" />
+    </div>
+  );
 }
 
 export function HomePage() {
@@ -100,6 +159,10 @@ export function HomePage() {
     navigate(`/search?${params.toString()}`);
   }
 
+  function showVoiceHint() {
+    showToast('Голосовой поиск скоро появится');
+  }
+
   return (
     <section className="motohub-screen public-ui-v2 public-home-screen">
       <header className="motohub-hero public-home-hero">
@@ -120,8 +183,8 @@ export function HomePage() {
 
         <form className="motohub-search public-home-search" onSubmit={submitSearch}>
           <Search size={20} aria-hidden="true" />
-          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: шиномонтаж, сервис, масло..." />
-          <button type="submit" aria-label="Найти"><Mic size={18} aria-hidden="true" /></button>
+          <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Например: шиномонтаж, сервис..." />
+          <button type="button" onClick={showVoiceHint} aria-label="Голосовой поиск скоро появится"><Mic size={18} aria-hidden="true" /></button>
         </form>
       </header>
 
@@ -164,9 +227,7 @@ export function HomePage() {
         </section>
 
         <section className="home-map-preview">
-          <div className="home-map-preview__canvas" aria-hidden="true">
-            {mapPlaces.map((place, index) => <span className="home-map-preview__pin" style={getMapPinStyle(place)} key={place.id}>{index + 1}</span>)}
-          </div>
+          <HomeYandexPreview places={mapPlaces} regionId={settings.regionId} />
           <div className="home-map-preview__content">
             <span>Карта МотоГде</span>
             <h2>Места на карте Смоленска</h2>

@@ -48,6 +48,11 @@ function getContextTitle(params: { query: string; category: SearchCategory | 'al
   return 'Места рядом';
 }
 
+function formatSearchTitle(value: string) {
+  const trimmed = value.trim();
+  return trimmed ? `${trimmed.slice(0, 1).toLocaleUpperCase('ru-RU')}${trimmed.slice(1)}` : value;
+}
+
 function canFavorite(type: string): type is SearchItemType {
   return type === 'place' || type === 'route' || type === 'event';
 }
@@ -84,7 +89,7 @@ export function SearchResultsPage() {
 
   const secondaryResults = useMemo(() => results.filter((result) => result.item.type !== 'place'), [results]);
   const region = getRegionLabel(settings.regionId);
-  const title = getContextTitle({ query, category, date, featured, t });
+  const title = formatSearchTitle(getContextTitle({ query, category, date, featured, t }));
 
   function updateSearch(next: { q?: string; category?: SearchCategory | 'all' }) {
     const nextParams = new URLSearchParams(params);

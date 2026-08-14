@@ -10,48 +10,13 @@ import { type FormEvent, useCallback, useEffect, useMemo, useRef, useState } fro
 import { Link, useNavigate } from 'react-router-dom';
 import { appCategories } from '../data/categories';
 import { verificationLabels, type PlaceItem } from '../data/places';
-import { getRegionLabel, getRegionMapLocation } from '../data/regions';
+import { getRegionLabel } from '../data/regions';
 import { useBackendContent } from '../shared/content/backendContent';
 import { getLocalizedText } from '../shared/i18n/localizedText';
 import { useI18n } from '../shared/i18n/useI18n';
+import { getInitialLocation, loadYandexMaps, toYandexCoordinates, type YMapInstance } from '../shared/maps/yandexMaps';
 import { type GuestLanguage, useGuestSettings } from '../shared/storage/guestSettings';
 import { ImageWithFallback } from '../shared/ui/ImageWithFallback';
-
-type YMapInstance = {
-  destroy(): void;
-  setCenter(center: [number, number], zoom?: number, options?: unknown): void;
-  geoObjects: {
-    add(child: unknown): void;
-    removeAll(): void;
-  };
-};
-
-type YPlacemark = {
-  events: {
-    add(eventName: string, handler: (event?: { stopPropagation?: () => void }) => void): void;
-  };
-};
-
-type YMaps = {
-  ready(callback: () => void): void;
-  Map: new (node: HTMLElement, state: { center: [number, number]; zoom: number; controls?: string[] }) => YMapInstance;
-  Placemark: new (
-    coordinates: [number, number],
-    properties: { hintContent?: string },
-    options?: {
-      openBalloonOnClick?: boolean;
-      openHintOnHover?: boolean;
-      preset?: string;
-      iconColor?: string;
-    },
-  ) => YPlacemark;
-};
-
-declare global {
-  interface Window {
-    ymaps?: YMaps;
-  }
-}
 
 interface MapPoint {
   id: string;
@@ -74,9 +39,6 @@ interface MapFilter {
   categoryIds: readonly string[];
 }
 
-const mapApiKey = import.meta.env.VITE_YANDEX_MAPS_API_KEY as string | undefined;
-let yandexMapsPromise: Promise<YMaps> | null = null;
-
 const mapFilters: readonly MapFilter[] = [
   { id: 'all', title: 'Все', categoryIds: [] },
   { id: 'tire', title: 'Шиномонтаж', categoryIds: ['places-tire-services'] },
@@ -84,33 +46,6 @@ const mapFilters: readonly MapFilter[] = [
   { id: 'shops', title: 'Магазины', categoryIds: ['moto-shops'] },
   { id: 'training', title: 'Обучение', categoryIds: ['places-schools-instructors', 'places-training-areas'] },
 ];
-
-function loadYandexMaps() {
-  if (!mapApiKey) return Promise.reject(new Error('missing-api-key'));
-  if (typeof navigator !== 'undefined' && !navigator.onLine) return Promise.reject(new Error('offline'));
-  if (window.ymaps) return new Promise<YMaps>((resolve) => window.ymaps!.ready(() => resolve(window.ymaps!)));
-
-  yandexMapsPromise ??= new Promise<YMaps>((resolve, reject) => {
-    const script = document.createElement('script');
-    script.src = `https://api-maps.yandex.ru/2.1/?apikey=${encodeURIComponent(mapApiKey)}&lang=ru_RU`;
-    script.async = true;
-    script.dataset.motohubYandexMap = 'true';
-    script.onload = () => window.ymaps?.ready(() => resolve(window.ymaps!));
-    script.onerror = () => reject(new Error('load-error'));
-    document.head.appendChild(script);
-  });
-
-  return yandexMapsPromise;
-}
-
-function toYandexCoordinates(coordinates: [number, number]): [number, number] {
-  return [coordinates[1], coordinates[0]];
-}
-
-function getInitialLocation(regionId: string) {
-  const regionLocation = getRegionMapLocation(regionId);
-  return { center: regionLocation.center ?? [32.0453, 54.7826], zoom: regionLocation.zoom };
-}
 
 function getCategoryTitle(categoryId: string, language: GuestLanguage) {
   const category = appCategories.find((item) => item.id === categoryId);

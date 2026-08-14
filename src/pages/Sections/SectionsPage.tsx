@@ -43,22 +43,16 @@ const sectionGroups = [
 ];
 
 function SectionsIndex() {
-  const { t } = useI18n();
   const settings = useGuestSettings();
   const regionStatus = getRegionContentStatus(settings.regionId);
   const regionNotice = getRegionContentNotice(regionStatus);
 
   return (
     <section className="motohub-screen simple-screen sections-screen">
-      <Link className="back-link" to="/search">
-        <ArrowLeft size={18} aria-hidden="true" />
-        {t('search.back')}
-      </Link>
-
       <header className="simple-screen__header">
         <p>МотоГде</p>
         <h1>Разделы</h1>
-        <span>Всё полезное для мотоциклиста в одном месте.</span>
+        <span>Полезное для мотоциклиста в одном месте.</span>
       </header>
 
       {regionNotice ? (

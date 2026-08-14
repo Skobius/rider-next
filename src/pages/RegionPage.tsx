@@ -21,8 +21,12 @@ export function RegionPage() {
   const selectedRegion = getRegionById(settings.regionId);
   const filteredRegions = useMemo(() => {
     const value = query.trim().toLowerCase();
-    return regions.filter((region) => region.name.toLowerCase().includes(value) || region.shortName?.toLowerCase().includes(value));
-  }, [query]);
+    return regions
+      .filter((region) => region.name.toLowerCase().includes(value) || region.shortName?.toLowerCase().includes(value))
+      .sort((a, b) => Number(b.id === settings.regionId) - Number(a.id === settings.regionId)
+        || Number(b.isAvailable) - Number(a.isAvailable)
+        || a.name.localeCompare(b.name));
+  }, [query, settings.regionId]);
 
   function selectRegion(regionId: string) {
     updateGuestSettings({ regionId });
@@ -65,9 +69,9 @@ export function RegionPage() {
             type="button"
             onClick={() => selectRegion(region.id)}
           >
-            <span>
+            <span className="region-row__main">
               <MapPin size={18} aria-hidden="true" />
-              <span>
+              <span className="region-row__copy">
                 <strong>{region.name}</strong>
                 <small>{t(regionTypeKey[region.type])} · {region.isAvailable ? t('region.filled') : t('region.filling')}</small>
               </span>

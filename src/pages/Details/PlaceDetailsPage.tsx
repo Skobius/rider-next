@@ -189,7 +189,7 @@ export function PlaceDetailsPage() {
                 {showAllOfferings ? 'Скрыть' : 'Показать всё'}
               </button>
             ) : null}
-            {structuredServices.length ? (
+            {!visibleOfferings.length && structuredServices.length ? (
               <div className="structured-service-list public-structured-services">
                 {structuredServices.map((service) => (
                   <div key={service.id}>
@@ -213,8 +213,8 @@ export function PlaceDetailsPage() {
 
         {place.mg67Comment ? (
           <section className="soft-callout detail-mg67-callout public-soft-callout">
-            <span>MG67</span>
-            <strong>{t('places.mg67Comment')}</strong>
+            <span>МотоГде</span>
+            <strong>Комментарий команды МотоГде</strong>
             <p>{getLocalizedText(place.mg67Comment, language)}</p>
           </section>
         ) : null}
